@@ -64,7 +64,7 @@ struct AppSettings: Codable {
     var showImages: Bool = true
     var showDescriptions: Bool = true
 
-    // NEW: show topic tags under articles
+    // Show topic tags under articles
     var enableTags: Bool = true
 
     // Inline reader view toggle
@@ -78,4 +78,12 @@ struct AppSettings: Codable {
 
     // Ask before removing from Saved
     var confirmUnsaveInSavedTab: Bool = true
+
+    // Social tab + per‑app visibility
+    var showSocialTab: Bool = true
+    var showInstagram: Bool = true
+    var showX: Bool = true
+    var showReddit: Bool = true
+    var showTikTok: Bool = true
+    var showLinkedIn: Bool = true
 }

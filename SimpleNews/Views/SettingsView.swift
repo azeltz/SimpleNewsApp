@@ -14,15 +14,12 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
-            languageAndCountrySection
-
-            Section(header: Text("Sources")) {
-                NavigationLink("Manage sources") {
-                    SourcesSettingsView(viewModel: viewModel)
-                }
-            }
-
             displaySection
+
+            sourcesSection
+            
+            languageAndCountrySection
+            
             interestsSection
         }
         .navigationTitle("Settings")
@@ -34,19 +31,50 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: - Display
-
-    private var displaySection: some View {
-        Section("Display") {
-            Toggle("Show images in list", isOn: $draftSettings.showImages)
-            Toggle("Show descriptions in list", isOn: $draftSettings.showDescriptions)
-
-            // Toggle for inline article view in detail
-            Toggle("Show inline article view", isOn: $draftSettings.enableInLineView)
-
-            Toggle("Ask before removing saved articles", isOn: $draftSettings.confirmUnsaveInSavedTab)
+    private func applyChanges() {
+        viewModel.settings = draftSettings
+        viewModel.settings.save()
+        Task {
+            await viewModel.refreshIfAllowed(ignoreCooldown: true)
         }
     }
+
+    // MARK: - Display
+
+        private var displaySection: some View {
+            Section("Display") {
+                Toggle("Show images in list", isOn: $draftSettings.showImages)
+                Toggle("Show descriptions in list", isOn: $draftSettings.showDescriptions)
+
+                Toggle("Show inline article view", isOn: $draftSettings.enableInLineView)
+
+                Toggle("Ask before removing saved articles", isOn: $draftSettings.confirmUnsaveInSavedTab)
+
+                // Show/hide the Social tab
+                Toggle("Show Social tab", isOn: $draftSettings.showSocialTab)
+                    .onChange(of: draftSettings.showSocialTab) {
+                        applyChanges()
+                    }
+            }
+        }
+
+        // MARK: - Sources entry
+
+        private var sourcesSection: some View {
+            Section(header: Text("Sources")) {
+                // Manage news sources
+                NavigationLink("Manage news sources") {
+                    NewsSourcesSettingsView(viewModel: viewModel)
+                }
+
+                // Manage social sources – only when Social tab is on
+                if draftSettings.showSocialTab {
+                    NavigationLink("Manage social sources") {
+                        SocialSourcesSettingsView(viewModel: viewModel)
+                    }
+                }
+            }
+        }
 
     // MARK: - Combined languages + countries
 
@@ -170,14 +198,6 @@ struct SettingsView: View {
         for index in offsets {
             let tag = sortedKeys[index]
             viewModel.removeTag(tag)
-        }
-    }
-
-    private func applyChanges() {
-        viewModel.settings = draftSettings
-        viewModel.settings.save()
-        Task {
-            await viewModel.refreshIfAllowed(ignoreCooldown: true)
         }
     }
 }

@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct SourcesSettingsView: View {
+struct NewsSourcesSettingsView: View {
     @ObservedObject var viewModel: NewsViewModel
 
     @State private var draftSettings: AppSettings = AppSettings.load()
@@ -37,7 +37,7 @@ struct SourcesSettingsView: View {
             rssSection
             newsdataSection
         }
-        .navigationTitle("Sources")
+        .navigationTitle("News Sources")
         .onAppear {
             draftSettings = viewModel.settings
             Task { await loadBackendFeeds() }
@@ -201,6 +201,7 @@ struct SourcesSettingsView: View {
         }
     }
 
+
     // MARK: - Helpers
 
     private func scheduleLabel(_ schedule: BackendFeed.Schedule?) -> String {
@@ -318,5 +319,39 @@ struct SourcesSettingsView: View {
                 backendSourceStatus = "Network error: \(error.localizedDescription)"
             }
         }
+    }
+}
+
+struct SocialSourcesSettingsView: View {
+    @ObservedObject var viewModel: NewsViewModel
+    @State private var draftSettings: AppSettings = AppSettings.load()
+
+    var body: some View {
+        Form {
+            Section("Social sources") {
+                Toggle("Show Instagram", isOn: $draftSettings.showInstagram)
+                Toggle("Show X (Twitter)", isOn: $draftSettings.showX)
+                Toggle("Show Reddit", isOn: $draftSettings.showReddit)
+                Toggle("Show TikTok", isOn: $draftSettings.showTikTok)
+                Toggle("Show LinkedIn", isOn: $draftSettings.showLinkedIn)
+
+                Text("These control which social apps appear under the Social tab. Hiding a source does not affect your accounts or logins.")
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .navigationTitle("Social sources")
+        .onAppear {
+            draftSettings = viewModel.settings
+        }
+        .onDisappear {
+            applyChanges()
+        }
+    }
+
+    private func applyChanges() {
+        viewModel.settings = draftSettings
+        viewModel.settings.save()
     }
 }

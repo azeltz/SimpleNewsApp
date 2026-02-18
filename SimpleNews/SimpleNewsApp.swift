@@ -29,6 +29,16 @@ struct SimpleNewsApp: App {
                     Label("Saved", systemImage: "bookmark.fill")
                 }
 
+                if newsViewModel.settings.showSocialTab {
+                    NavigationStack {
+                        SocialView(viewModel: newsViewModel)
+                    }
+                    .tabItem {
+                        Label("Social", systemImage: "person.2.fill")
+                    }
+                    .transition(.opacity)
+                }
+
                 NavigationStack {
                     SettingsView(viewModel: newsViewModel)
                 }
@@ -36,8 +46,8 @@ struct SimpleNewsApp: App {
                     Label("Settings", systemImage: "gearshape.fill")
                 }
             }
-            // Make selected tab clearly blue, not gray
             .tint(Color.blue)
+            .animation(.easeInOut(duration: 0.25), value: newsViewModel.settings.showSocialTab)
         }
     }
 }
