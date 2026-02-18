@@ -17,6 +17,36 @@ struct SavedView: View {
     @State private var pendingUnsave: SavedArticle? = nil
     @State private var showUnsaveAlert: Bool = false
 
+    // Search state (local to Saved tab)
+    @State private var searchText: String = ""
+    @State private var searchInTitle: Bool = true
+    @State private var searchInDescription: Bool = true
+    @State private var searchInTags: Bool = true
+
+    private var filteredSaved: [SavedArticle] {
+        guard !searchText.isEmpty else { return viewModel.savedArticles }
+        let q = searchText.lowercased()
+
+        return viewModel.savedArticles.filter { saved in
+            let article = articleFromSaved(saved)
+
+            var matches = false
+
+            if searchInTitle {
+                matches = matches || article.title.lowercased().contains(q)
+            }
+            if searchInDescription, let desc = article.description?.lowercased() {
+                matches = matches || desc.contains(q)
+            }
+            if searchInTags {
+                let tagsText = article.tags.joined(separator: " ").lowercased()
+                matches = matches || tagsText.contains(q)
+            }
+
+            return matches
+        }
+    }
+
     var body: some View {
         NavigationStack {
             Group {
@@ -26,14 +56,14 @@ struct SavedView: View {
                         .multilineTextAlignment(.center)
                         .padding()
                 } else {
-                    List(viewModel.savedArticles) { saved in
+                    List(filteredSaved) { saved in
                         let article = articleFromSaved(saved)
                         ArticleRow(
                             article: article,
                             showImages: settingsStore.settings.showImages,
                             showDescription: settingsStore.settings.showDescriptions,
                             isExpanded: expandedArticleIDs.contains(article.id),
-                            showTags: settingsStore.settings.enableTags,      // NEW
+                            showTags: settingsStore.settings.enableTags,
                             onToggleSaved: {
                                 if settingsStore.settings.confirmUnsaveInSavedTab {
                                     pendingUnsave = saved
@@ -62,6 +92,25 @@ struct SavedView: View {
                 }
             }
             .navigationTitle("Saved")
+            .searchable(
+                text: $searchText,
+                placement: .navigationBarDrawer(displayMode: .automatic)
+            )
+            .searchPresentationToolbarBehavior(.avoidHidingContent)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Menu {
+                        Section("Search in") {
+                            Toggle("Titles", isOn: $searchInTitle)
+                            Toggle("Descriptions", isOn: $searchInDescription)
+                            Toggle("Tags", isOn: $searchInTags)
+                        }
+                    } label: {
+                        Image(systemName: "line.3.horizontal.decrease.circle")
+                    }
+                    .menuActionDismissBehavior(.disabled)
+                }
+            }
             .sheet(item: $selectedSaved) { saved in
                 let article = articleFromSaved(saved)
                 NavigationStack {

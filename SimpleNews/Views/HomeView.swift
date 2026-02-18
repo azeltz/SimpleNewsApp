@@ -15,6 +15,7 @@ struct SafariItem: Identifiable {
 struct HomeView: View {
     @EnvironmentObject var settingsStore: SettingsStore
     @ObservedObject var viewModel: NewsViewModel
+
     @State private var expandedArticleIDs: Set<String> = []
     @State private var selectedArticle: Article? = nil
     @State private var safariItem: SafariItem? = nil
@@ -23,6 +24,25 @@ struct HomeView: View {
         NavigationStack {
             content
                 .navigationTitle("SimpleNews")
+                .searchable(
+                    text: $viewModel.searchText,
+                    placement: .navigationBarDrawer(displayMode: .automatic)
+                )
+                .searchPresentationToolbarBehavior(.avoidHidingContent)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Menu {
+                            Section("Search in") {
+                                Toggle("Titles", isOn: $viewModel.searchInTitle)
+                                Toggle("Descriptions", isOn: $viewModel.searchInDescription)
+                                Toggle("Tags", isOn: $viewModel.searchInTags)
+                            }
+                        } label: {
+                            Image(systemName: "line.3.horizontal.decrease.circle")
+                        }
+                        .menuActionDismissBehavior(.disabled)
+                    }
+                }
                 .task {
                     await viewModel.loadInitial()
                 }
@@ -61,7 +81,7 @@ struct HomeView: View {
                 }
             }
         } else {
-            List(viewModel.articles) { article in
+            List(viewModel.filteredArticles) { article in
                 ArticleRow(
                     article: article,
                     showImages: settingsStore.settings.showImages,

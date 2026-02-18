@@ -14,6 +14,33 @@ final class NewsViewModel: ObservableObject {
     @Published var errorMessage: String? = nil
     @Published var tagWeights: [String: Double] = TagWeightsStorage.load()
     @Published var settings: AppSettings = AppSettings.load()
+    
+    @Published var searchText: String = ""
+    @Published var searchInTitle = true
+    @Published var searchInDescription = true
+    @Published var searchInTags = true
+
+    var filteredArticles: [Article] {
+        guard !searchText.isEmpty else { return articles }
+        let query = searchText.lowercased()
+
+        return articles.filter { article in
+            var matches = false
+
+            if searchInTitle {
+                matches = matches || article.title.lowercased().contains(query)
+            }
+            if searchInDescription, let desc = article.description?.lowercased() {
+                matches = matches || desc.contains(query)
+            }
+            if searchInTags {
+                let tags = article.tags.joined(separator: " ").lowercased()
+                matches = matches || tags.contains(query)
+            }
+
+            return matches
+        }
+    }
 
     // Persistent saved articles (independent of current feed)
     @Published private(set) var savedArticles: [SavedArticle] = {

@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 fileprivate let articleDateFormatter: DateFormatter = {
     let f = DateFormatter()
@@ -13,6 +14,17 @@ fileprivate let articleDateFormatter: DateFormatter = {
     f.timeStyle = .short
     return f
 }()
+
+// Simple ShareSheet wrapper around UIActivityViewController
+struct ShareSheet: UIViewControllerRepresentable {
+    let activityItems: [Any]
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: activityItems, applicationActivities: nil)
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
+}
 
 struct ArticleDetailView: View {
     let article: Article
@@ -24,6 +36,7 @@ struct ArticleDetailView: View {
     @State private var isSaved: Bool
     @StateObject private var readerLoader = ReaderLoader()
     @State private var readerHeight: CGFloat = 0
+    @State private var showShareSheet: Bool = false
 
     @Environment(\.openURL) private var openURL
 
@@ -53,6 +66,19 @@ struct ArticleDetailView: View {
         }
 
         return nil
+    }
+
+    // Items to share (URL preferred, fallback to text)
+    private var shareItems: [Any] {
+        if let url = article.url {
+            return [url]
+        } else {
+            var text = article.title
+            if let body = bodyText(for: article) {
+                text += "\n\n" + body
+            }
+            return [text]
+        }
     }
 
     var body: some View {
@@ -176,14 +202,24 @@ struct ArticleDetailView: View {
         .navigationTitle(article.source ?? "")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItemGroup(placement: .navigationBarTrailing) {
                 Button {
                     onToggleSaved()
                     isSaved.toggle()
                 } label: {
                     Image(systemName: isSaved ? "bookmark.fill" : "bookmark")
                 }
+
+                Button {
+                    showShareSheet = true
+                } label: {
+                    Image(systemName: "square.and.arrow.up")
+                }
             }
+        }
+        .sheet(isPresented: $showShareSheet) {
+            ShareSheet(activityItems: shareItems)
+                .presentationDetents([.medium, .large])
         }
         .fullScreenCover(isPresented: $showSafari) {
             if let url = article.url {
