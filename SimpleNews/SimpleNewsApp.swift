@@ -8,9 +8,20 @@
 import SwiftUI
 import SwiftData
 
+import Combine
+
+final class SettingsStore: ObservableObject {
+    @Published var settings: AppSettings = AppSettings.load()
+
+    func save() {
+        settings.save()
+    }
+}
+
 @main
 struct SimpleNewsApp: App {
     @StateObject private var newsViewModel = NewsViewModel()
+    @StateObject private var settingsStore = SettingsStore()
 
     var body: some Scene {
         WindowGroup {
@@ -18,36 +29,28 @@ struct SimpleNewsApp: App {
                 NavigationStack {
                     HomeView(viewModel: newsViewModel)
                 }
-                .tabItem {
-                    Label("Home", systemImage: "house.fill")
-                }
+                .tabItem { Label("Home", systemImage: "house.fill") }
 
                 NavigationStack {
                     SavedView(viewModel: newsViewModel)
                 }
-                .tabItem {
-                    Label("Saved", systemImage: "bookmark.fill")
-                }
+                .tabItem { Label("Saved", systemImage: "bookmark.fill") }
 
-                if newsViewModel.settings.showSocialTab {
+                if settingsStore.settings.showSocialTab {
                     NavigationStack {
-                        SocialView(viewModel: newsViewModel)
+                        SocialView()
                     }
-                    .tabItem {
-                        Label("Social", systemImage: "person.2.fill")
-                    }
+                    .tabItem { Label("Social", systemImage: "person.2.fill") }
                     .transition(.opacity)
                 }
 
                 NavigationStack {
                     SettingsView(viewModel: newsViewModel)
                 }
-                .tabItem {
-                    Label("Settings", systemImage: "gearshape.fill")
-                }
+                .tabItem { Label("Settings", systemImage: "gearshape.fill") }
             }
-            .tint(Color.blue)
-            .animation(.easeInOut(duration: 0.25), value: newsViewModel.settings.showSocialTab)
+            .environmentObject(settingsStore)
+            .tint(.blue)
         }
     }
 }

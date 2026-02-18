@@ -13,6 +13,7 @@ struct SafariItem: Identifiable {
 }
 
 struct HomeView: View {
+    @EnvironmentObject var settingsStore: SettingsStore
     @ObservedObject var viewModel: NewsViewModel
     @State private var expandedArticleIDs: Set<String> = []
     @State private var selectedArticle: Article? = nil
@@ -32,8 +33,8 @@ struct HomeView: View {
                     NavigationStack {
                         ArticleDetailView(
                             article: article,
-                            showImages: viewModel.settings.showImages,
-                            enableInLineView: viewModel.settings.enableInLineView,
+                            showImages: settingsStore.settings.showImages,
+                            enableInLineView: settingsStore.settings.enableInLineView,
                             onToggleSaved: {
                                 viewModel.toggleSaved(article)
                             }
@@ -63,10 +64,10 @@ struct HomeView: View {
             List(viewModel.articles) { article in
                 ArticleRow(
                     article: article,
-                    showImages: viewModel.settings.showImages,
-                    showDescription: viewModel.settings.showDescriptions,
+                    showImages: settingsStore.settings.showImages,
+                    showDescription: settingsStore.settings.showDescriptions,
                     isExpanded: expandedArticleIDs.contains(article.id),
-                    showTags: viewModel.settings.enableTags,
+                    showTags: settingsStore.settings.enableTags,
                     onToggleSaved: {
                         viewModel.toggleSaved(article)
                     },

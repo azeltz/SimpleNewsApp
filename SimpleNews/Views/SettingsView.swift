@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct SettingsView: View {
+    @EnvironmentObject var settingsStore: SettingsStore
     @ObservedObject var viewModel: NewsViewModel
     @State private var draftSettings: AppSettings = AppSettings.load()
     @State private var newTagText: String = ""
@@ -24,7 +25,7 @@ struct SettingsView: View {
         }
         .navigationTitle("Settings")
         .onAppear {
-            draftSettings = viewModel.settings
+            draftSettings = settingsStore.settings
         }
         .onDisappear {
             applyChanges()
@@ -32,12 +33,9 @@ struct SettingsView: View {
     }
 
     private func applyChanges() {
-        viewModel.settings = draftSettings
-        viewModel.settings.save()
-        Task {
-            await viewModel.refreshIfAllowed(ignoreCooldown: true)
+            settingsStore.settings = draftSettings
+            settingsStore.save()
         }
-    }
 
     // MARK: - Display
 
@@ -70,7 +68,7 @@ struct SettingsView: View {
                 // Manage social sources – only when Social tab is on
                 if draftSettings.showSocialTab {
                     NavigationLink("Manage social sources") {
-                        SocialSourcesSettingsView(viewModel: viewModel)
+                        SocialSourcesSettingsView()
                     }
                 }
             }

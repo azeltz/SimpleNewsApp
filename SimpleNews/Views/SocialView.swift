@@ -11,56 +11,66 @@ import WebKit
 // MARK: - SocialView
 
 struct SocialView: View {
-    @ObservedObject var viewModel: NewsViewModel
+    @EnvironmentObject var settingsStore: SettingsStore
 
     var body: some View {
         NavigationStack {
             List {
                 let hasAnySource =
-                    viewModel.settings.showInstagram ||
-                    viewModel.settings.showX ||
-                    viewModel.settings.showReddit ||
-                    viewModel.settings.showTikTok ||
-                    viewModel.settings.showLinkedIn
+                    settingsStore.settings.showInstagram ||
+                    settingsStore.settings.showX ||
+                    settingsStore.settings.showReddit ||
+                    settingsStore.settings.showTikTok ||
+                    settingsStore.settings.showLinkedIn
 
                 if hasAnySource {
-                    if viewModel.settings.showInstagram {
+                    if settingsStore.settings.showInstagram {
                         NavigationLink {
                             InstagramCleanerView()
                         } label: {
                             Label("Instagram", systemImage: "camera")
+                                .foregroundStyle(Color(red: 0.91, green: 0.19, blue: 0.42))
+                                .bold()
                         }
                     }
 
-                    if viewModel.settings.showX {
+                    if settingsStore.settings.showX {
                         NavigationLink {
                             XCleanerView()
                         } label: {
                             Label("X (Twitter)", systemImage: "bird")
+                                .foregroundStyle(.black)
+                                .bold()
                         }
                     }
 
-                    if viewModel.settings.showReddit {
+                    if settingsStore.settings.showReddit {
                         NavigationLink {
                             RedditCleanerView()
                         } label: {
                             Label("Reddit", systemImage: "bubble.left.and.bubble.right")
+                                .foregroundStyle(Color(red: 1.0, green: 0.27, blue: 0.0))
+                                .bold()
                         }
                     }
 
-                    if viewModel.settings.showTikTok {
+                    if settingsStore.settings.showTikTok {
                         NavigationLink {
                             TikTokCleanerView()
                         } label: {
                             Label("TikTok", systemImage: "music.note")
+                                .foregroundStyle(Color(red: 0.0, green: 0.95, blue: 0.92))
+                                .bold()
                         }
                     }
 
-                    if viewModel.settings.showLinkedIn {
+                    if settingsStore.settings.showLinkedIn {
                         NavigationLink {
                             LinkedInCleanerView()
                         } label: {
                             Label("LinkedIn", systemImage: "briefcase")
+                                .foregroundStyle(Color(red: 0.04, green: 0.40, blue: 0.76))
+                                .bold()
                         }
                     }
                 } else {
@@ -74,7 +84,7 @@ struct SocialView: View {
                             .fixedSize(horizontal: false, vertical: true)
 
                         NavigationLink {
-                            SocialSourcesSettingsView(viewModel: viewModel)
+                            SocialSourcesSettingsView()
                         } label: {
                             HStack(spacing: 4) {
                                 Image(systemName: "slider.horizontal.3")
