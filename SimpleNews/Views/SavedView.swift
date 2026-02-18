@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct SavedView: View {
+    @EnvironmentObject var settingsStore: SettingsStore
     @ObservedObject var viewModel: NewsViewModel
 
     @State private var expandedArticleIDs: Set<String> = []
@@ -29,12 +30,12 @@ struct SavedView: View {
                         let article = articleFromSaved(saved)
                         ArticleRow(
                             article: article,
-                            showImages: viewModel.settings.showImages,
-                            showDescription: viewModel.settings.showDescriptions,
+                            showImages: settingsStore.settings.showImages,
+                            showDescription: settingsStore.settings.showDescriptions,
                             isExpanded: expandedArticleIDs.contains(article.id),
-                            showTags: viewModel.settings.enableTags,      // NEW
+                            showTags: settingsStore.settings.enableTags,      // NEW
                             onToggleSaved: {
-                                if viewModel.settings.confirmUnsaveInSavedTab {
+                                if settingsStore.settings.confirmUnsaveInSavedTab {
                                     pendingUnsave = saved
                                     showUnsaveAlert = true
                                 } else {
@@ -66,8 +67,8 @@ struct SavedView: View {
                 NavigationStack {
                     ArticleDetailView(
                         article: article,
-                        showImages: viewModel.settings.showImages,
-                        enableInLineView: viewModel.settings.enableInLineView,
+                        showImages: settingsStore.settings.showImages,
+                        enableInLineView: settingsStore.settings.enableInLineView,
                         onToggleSaved: {
                             viewModel.toggleSaved(article)
                         }

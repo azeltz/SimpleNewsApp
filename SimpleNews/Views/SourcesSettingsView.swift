@@ -1,6 +1,15 @@
-import SwiftUI
+//
+//  SourcesSettingsView.swift
+//  SimpleNews
+//
+//  Created by Amir Zeltzer on 2/18/26.
+//
 
-struct SourcesSettingsView: View {
+import SwiftUI
+import UIKit
+
+struct NewsSourcesSettingsView: View {
+    @EnvironmentObject var settingsStore: SettingsStore
     @ObservedObject var viewModel: NewsViewModel
 
     @State private var draftSettings: AppSettings = AppSettings.load()
@@ -37,9 +46,9 @@ struct SourcesSettingsView: View {
             rssSection
             newsdataSection
         }
-        .navigationTitle("Sources")
+        .navigationTitle("News Sources")
         .onAppear {
-            draftSettings = viewModel.settings
+            draftSettings = settingsStore.settings
             Task { await loadBackendFeeds() }
         }
         .onDisappear {
@@ -55,7 +64,7 @@ struct SourcesSettingsView: View {
             Toggle("Include RSS articles", isOn: $draftSettings.enableRSS)
 
             if draftSettings.enableRSS {
-                // Existing backend sources (dropdown) – now immediately after the toggle
+                // Existing backend sources
                 if isLoadingBackendFeeds {
                     Text("Loading current backend sources...")
                         .font(.footnote)
@@ -82,40 +91,117 @@ struct SourcesSettingsView: View {
                     }
                 }
 
-                // Add feed form (more distinguishable fields)
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Add RSS feed")
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
+                // Feed ID
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Feed ID")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
 
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Feed ID")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+                    HStack(spacing: 8) {
                         TextField("e.g. user_custom_1", text: $feedId)
                             .textFieldStyle(.roundedBorder)
                             .autocapitalization(.none)
-                    }
 
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Feed URL")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+                        HStack(spacing: 6) {
+                            PasteButton(payloadType: String.self) { strings in
+                                if let first = strings.first {
+                                    feedId = first.trimmingCharacters(in: .whitespacesAndNewlines)
+                                }
+                            }
+                            .labelStyle(.iconOnly)
+                            .frame(width: 32, height: 32)
+                            .background(Color.accentColor)
+                            .foregroundColor(.white)
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+
+                            Button {
+                                feedId = ""
+                            } label: {
+                                Image(systemName: "xmark")
+                                    .frame(width: 32, height: 32)
+                                    .background(Color(.systemGray5))
+                                    .foregroundColor(.primary)
+                                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                            }
+                        }
+                    }
+                }
+
+                // Feed URL
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Feed URL")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+
+                    HStack(spacing: 8) {
                         TextField("https://example.com/rss", text: $feedURL)
                             .textFieldStyle(.roundedBorder)
                             .keyboardType(.URL)
                             .autocapitalization(.none)
-                    }
 
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Source domain")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+                        HStack(spacing: 6) {
+                            PasteButton(payloadType: String.self) { strings in
+                                if let first = strings.first {
+                                    feedURL = first.trimmingCharacters(in: .whitespacesAndNewlines)
+                                }
+                            }
+                            .labelStyle(.iconOnly)
+                            .frame(width: 32, height: 32)
+                            .background(Color.accentColor)
+                            .foregroundColor(.white)
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+
+                            Button {
+                                feedURL = ""
+                            } label: {
+                                Image(systemName: "xmark")
+                                    .frame(width: 32, height: 32)
+                                    .background(Color(.systemGray5))
+                                    .foregroundColor(.primary)
+                                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                            }
+                        }
+                    }
+                }
+
+                // Source domain
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Source domain")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+
+                    HStack(spacing: 8) {
                         TextField("example.com", text: $feedSource)
                             .textFieldStyle(.roundedBorder)
                             .autocapitalization(.none)
+
+                        HStack(spacing: 6) {
+                            PasteButton(payloadType: String.self) { strings in
+                                if let first = strings.first {
+                                    feedSource = first
+                                        .trimmingCharacters(in: .whitespacesAndNewlines)
+                                        .lowercased()
+                                }
+                            }
+                            .labelStyle(.iconOnly)
+                            .frame(width: 32, height: 32)
+                            .background(Color.accentColor)
+                            .foregroundColor(.white)
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+
+                            Button {
+                                feedSource = ""
+                            } label: {
+                                Image(systemName: "xmark")
+                                    .frame(width: 32, height: 32)
+                                    .background(Color(.systemGray5))
+                                    .foregroundColor(.primary)
+                                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                            }
+                        }
                     }
                 }
+
                 .padding(.vertical, 4)
 
                 Toggle("Use custom schedule", isOn: $isCustomKind)
@@ -146,7 +232,6 @@ struct SourcesSettingsView: View {
             }
         }
     }
-
 
     // MARK: - Newsdata section
 
@@ -201,6 +286,7 @@ struct SourcesSettingsView: View {
         }
     }
 
+
     // MARK: - Helpers
 
     private func scheduleLabel(_ schedule: BackendFeed.Schedule?) -> String {
@@ -215,8 +301,8 @@ struct SourcesSettingsView: View {
     }
 
     private func applyChanges() {
-        viewModel.settings = draftSettings
-        viewModel.settings.save()
+        settingsStore.settings = draftSettings
+        settingsStore.settings.save()
         Task { await viewModel.refreshIfAllowed(ignoreCooldown: true) }
     }
 
@@ -318,5 +404,58 @@ struct SourcesSettingsView: View {
                 backendSourceStatus = "Network error: \(error.localizedDescription)"
             }
         }
+    }
+}
+
+struct SocialSourcesSettingsView: View {
+    @EnvironmentObject var settingsStore: SettingsStore
+    @State private var draftSettings: AppSettings = AppSettings.load()
+
+    var body: some View {
+        Form {
+            Section("Social sources") {
+                Toggle("Show Instagram", isOn: $draftSettings.showInstagram)
+                    .onChange(of: draftSettings.showInstagram) {
+                        applyChanges()
+                    }
+
+                Toggle("Show Reddit", isOn: $draftSettings.showReddit)
+                    .onChange(of: draftSettings.showReddit) {
+                        applyChanges()
+                    }
+
+                Toggle("Show LinkedIn", isOn: $draftSettings.showLinkedIn)
+                    .onChange(of: draftSettings.showLinkedIn) {
+                        applyChanges()
+                    }
+                
+//                Toggle("Show X (Twitter)", isOn: $draftSettings.showX)
+//                    .onChange(of: draftSettings.showX) {
+//                        applyChanges()
+//                    }
+//                
+//                Toggle("Show TikTok", isOn: $draftSettings.showTikTok)
+//                    .onChange(of: draftSettings.showTikTok) {
+//                        applyChanges()
+//                    }
+
+                Text("These control which social apps appear under the Social tab. Hiding a source does not affect your accounts or logins.")
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .navigationTitle("Social sources")
+        .onAppear {
+            draftSettings = settingsStore.settings
+        }
+        .onDisappear {
+            applyChanges()
+        }
+    }
+
+    private func applyChanges() {
+        settingsStore.settings = draftSettings
+        settingsStore.settings.save()
     }
 }

@@ -8,9 +8,20 @@
 import SwiftUI
 import SwiftData
 
+import Combine
+
+final class SettingsStore: ObservableObject {
+    @Published var settings: AppSettings = AppSettings.load()
+
+    func save() {
+        settings.save()
+    }
+}
+
 @main
 struct SimpleNewsApp: App {
     @StateObject private var newsViewModel = NewsViewModel()
+    @StateObject private var settingsStore = SettingsStore()
 
     var body: some Scene {
         WindowGroup {
@@ -18,26 +29,28 @@ struct SimpleNewsApp: App {
                 NavigationStack {
                     HomeView(viewModel: newsViewModel)
                 }
-                .tabItem {
-                    Label("Home", systemImage: "house.fill")
-                }
+                .tabItem { Label("Home", systemImage: "house.fill") }
 
                 NavigationStack {
                     SavedView(viewModel: newsViewModel)
                 }
-                .tabItem {
-                    Label("Saved", systemImage: "bookmark.fill")
+                .tabItem { Label("Saved", systemImage: "bookmark.fill") }
+
+                if settingsStore.settings.showSocialTab {
+                    NavigationStack {
+                        SocialView()
+                    }
+                    .tabItem { Label("Social", systemImage: "person.2.fill") }
+                    .transition(.opacity)
                 }
 
                 NavigationStack {
                     SettingsView(viewModel: newsViewModel)
                 }
-                .tabItem {
-                    Label("Settings", systemImage: "gearshape.fill")
-                }
+                .tabItem { Label("Settings", systemImage: "gearshape.fill") }
             }
-            // Make selected tab clearly blue, not gray
-            .tint(Color.blue)
+            .environmentObject(settingsStore)
+            .tint(.blue)
         }
     }
 }
