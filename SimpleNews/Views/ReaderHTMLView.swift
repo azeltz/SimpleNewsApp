@@ -19,9 +19,13 @@ struct ReaderHTMLView: UIViewRepresentable {
     func makeUIView(context: Context) -> WKWebView {
         let webView = WKWebView()
         webView.navigationDelegate = context.coordinator
+
+        // Transparent background so app’s SwiftUI background shows through
         webView.isOpaque = false
         webView.backgroundColor = .clear
+        webView.scrollView.backgroundColor = .clear
         webView.scrollView.isScrollEnabled = false   // parent ScrollView will scroll
+
         return webView
     }
 
@@ -37,6 +41,11 @@ struct ReaderHTMLView: UIViewRepresentable {
         }
 
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            // Reinforce transparency after load to avoid white flash
+            webView.isOpaque = false
+            webView.backgroundColor = .clear
+            webView.scrollView.backgroundColor = .clear
+
             webView.evaluateJavaScript("document.body.scrollHeight") { result, error in
                 guard error == nil, let height = result as? CGFloat else { return }
                 DispatchQueue.main.async {
@@ -46,4 +55,3 @@ struct ReaderHTMLView: UIViewRepresentable {
         }
     }
 }
-
