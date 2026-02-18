@@ -419,18 +419,8 @@ struct SocialSourcesSettingsView: View {
                         applyChanges()
                     }
 
-                Toggle("Show X (Twitter)", isOn: $draftSettings.showX)
-                    .onChange(of: draftSettings.showX) {
-                        applyChanges()
-                    }
-
                 Toggle("Show Reddit", isOn: $draftSettings.showReddit)
                     .onChange(of: draftSettings.showReddit) {
-                        applyChanges()
-                    }
-
-                Toggle("Show TikTok", isOn: $draftSettings.showTikTok)
-                    .onChange(of: draftSettings.showTikTok) {
                         applyChanges()
                     }
 
@@ -438,6 +428,16 @@ struct SocialSourcesSettingsView: View {
                     .onChange(of: draftSettings.showLinkedIn) {
                         applyChanges()
                     }
+                
+//                Toggle("Show X (Twitter)", isOn: $draftSettings.showX)
+//                    .onChange(of: draftSettings.showX) {
+//                        applyChanges()
+//                    }
+//                
+//                Toggle("Show TikTok", isOn: $draftSettings.showTikTok)
+//                    .onChange(of: draftSettings.showTikTok) {
+//                        applyChanges()
+//                    }
 
                 Text("These control which social apps appear under the Social tab. Hiding a source does not affect your accounts or logins.")
                     .font(.footnote)

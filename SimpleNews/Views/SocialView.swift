@@ -7,6 +7,7 @@
 
 import SwiftUI
 import WebKit
+import UIKit
 
 // MARK: - SocialView
 
@@ -34,32 +35,12 @@ struct SocialView: View {
                         }
                     }
 
-                    if settingsStore.settings.showX {
-                        NavigationLink {
-                            XCleanerView()
-                        } label: {
-                            Label("X (Twitter)", systemImage: "bird")
-                                .foregroundStyle(.black)
-                                .bold()
-                        }
-                    }
-
                     if settingsStore.settings.showReddit {
                         NavigationLink {
                             RedditCleanerView()
                         } label: {
                             Label("Reddit", systemImage: "bubble.left.and.bubble.right")
                                 .foregroundStyle(Color(red: 1.0, green: 0.27, blue: 0.0))
-                                .bold()
-                        }
-                    }
-
-                    if settingsStore.settings.showTikTok {
-                        NavigationLink {
-                            TikTokCleanerView()
-                        } label: {
-                            Label("TikTok", systemImage: "music.note")
-                                .foregroundStyle(Color(red: 0.0, green: 0.95, blue: 0.92))
                                 .bold()
                         }
                     }
@@ -73,6 +54,27 @@ struct SocialView: View {
                                 .bold()
                         }
                     }
+                    
+//                    if settingsStore.settings.showX {
+//                        NavigationLink {
+//                            XCleanerView()
+//                        } label: {
+//                            Label("X (Twitter)", systemImage: "bird")
+//                                .foregroundStyle(.black)
+//                                .bold()
+//                        }
+//                    }
+//                    
+//                    if settingsStore.settings.showTikTok {
+//                        NavigationLink {
+//                            TikTokCleanerView()
+//                        } label: {
+//                            Label("TikTok", systemImage: "music.note")
+//                                .foregroundStyle(Color(red: 0.0, green: 0.95, blue: 0.92))
+//                                .bold()
+//                        }
+//                    }
+                    
                 } else {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("No social sources enabled")
@@ -116,18 +118,18 @@ final class WebViewCoordinator: NSObject, WKNavigationDelegate {
     func webView(_ webView: WKWebView,
                  didFailProvisionalNavigation navigation: WKNavigation?,
                  withError error: Error) {
-        print("didFailProvisionalNavigation:", error)
+        print("WKWebView didFailProvisionalNavigation:", error.localizedDescription)
     }
 
     func webView(_ webView: WKWebView,
                  didFail navigation: WKNavigation?,
                  withError error: Error) {
-        print("didFail navigation:", error)
+        print("WKWebView didFail navigation:", error.localizedDescription)
     }
 
     func webView(_ webView: WKWebView,
                  didFinish navigation: WKNavigation?) {
-        print("didFinish navigation")
+        print("WKWebView didFinish navigation, url:", webView.url?.absoluteString ?? "nil")
     }
 }
 
@@ -140,7 +142,8 @@ struct CleanerWebView: UIViewRepresentable {
     }
 
     func makeUIView(context: Context) -> WKWebView {
-        let config = WebEnvironment.shared.makeConfig()
+        // Start with a fresh config
+        let config = WKWebViewConfiguration()
         let contentController = WKUserContentController()
 
         if !cleanupScript.isEmpty {
@@ -155,7 +158,10 @@ struct CleanerWebView: UIViewRepresentable {
 
         let webView = WKWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = context.coordinator
-        webView.load(URLRequest(url: url))
+
+        let request = URLRequest(url: url)
+        webView.load(request)
+
         return webView
     }
 
@@ -202,49 +208,6 @@ struct InstagramCleanerView: View {
         )
         //.ignoresSafeArea()
         .navigationTitle("Instagram")
-        .navigationBarTitleDisplayMode(.inline)
-    }
-}
-
-// MARK: - XView
-
-private let xJS = """
-function isLoginPage() {
-  return window.location.pathname.startsWith("/login")
-      || document.querySelector('form[action="/sessions"]');
-}
-
-function isHomeTimeline() {
-  const path = window.location.pathname;
-  return (path === "/" || path.startsWith("/home")) && !isLoginPage();
-}
-
-function cleanX() {
-  if (!isHomeTimeline()) return;
-
-  const selectors = [
-    'aside[role="complementary"]',
-    'div[aria-label="Who to follow"]'
-  ];
-  selectors.forEach(sel => {
-    document.querySelectorAll(sel).forEach(el => {
-      el.style.display = "none";
-    });
-  });
-}
-
-cleanX();
-setInterval(cleanX, 3000);
-"""
-
-struct XCleanerView: View {
-    var body: some View {
-        CleanerWebView(
-            url: URL(string: "https://x.com/")!,
-            cleanupScript: ""//xJS
-        )
-        //.ignoresSafeArea()
-        .navigationTitle("X")
         .navigationBarTitleDisplayMode(.inline)
     }
 }
@@ -335,48 +298,103 @@ struct LinkedInCleanerView: View {
     }
 }
 
-// MARK: - TikTokView
+//// MARK: - XView
+//
+//private let xJS = """
+//function isLoginPage() {
+//  return window.location.pathname.startsWith("/login")
+//      || document.querySelector('form[action="/sessions"]');
+//}
+//
+//function isHomeTimeline() {
+//  const path = window.location.pathname;
+//  return (path === "/" || path.startsWith("/home")) && !isLoginPage();
+//}
+//
+//function cleanX() {
+//  if (!isHomeTimeline()) return;
+//
+//  const selectors = [
+//    'aside[role="complementary"]',
+//    'div[aria-label="Who to follow"]'
+//  ];
+//  selectors.forEach(sel => {
+//    document.querySelectorAll(sel).forEach(el => {
+//      el.style.display = "none";
+//    });
+//  });
+//}
+//
+//cleanX();
+//setInterval(cleanX, 3000);
+//"""
+//
+//struct XCleanerView: View {
+//    var body: some View {
+//        VStack(spacing: 12) {
+//            ProgressView()
+//            Text("Opening X in Safari…")
+//                .font(.footnote)
+//                .foregroundColor(.secondary)
+//        }
+//        .onAppear {
+//            if let url = URL(string: "https://x.com/home") {
+//                UIApplication.shared.open(url)
+//            }
+//        }
+//        .navigationTitle("X")
+//        .navigationBarTitleDisplayMode(.inline)
+//    }
+//}
 
-private let tiktokJS = """
-function isLoginPage() {
-  const path = window.location.pathname;
-  return path.startsWith("/login");
-}
-
-function isHomeFeed() {
-  const path = window.location.pathname;
-  // main home feed is "/" or localized variants; adjust as needed
-  const isRoot = path === "/" || path === "";
-  return isRoot && !isLoginPage();
-}
-
-function cleanTikTok() {
-  if (!isHomeFeed() || isLoginPage()) return;
-
-  const selectors = [
-    'div[data-e2e="recommend-side-panel"]',   // right sidebar
-    'div[data-e2e="trending-hashtag-panel"]', // trending panel
-    'div[data-e2e="footer"]'                  // footer clutter
-  ];
-  selectors.forEach(sel => {
-    document.querySelectorAll(sel).forEach(el => {
-      el.style.display = "none";
-    });
-  });
-}
-
-cleanTikTok();
-setInterval(cleanTikTok, 3000);
-"""
-
-struct TikTokCleanerView: View {
-    var body: some View {
-        CleanerWebView(
-            url: URL(string: "https://www.tiktok.com/")!,
-            cleanupScript: tiktokJS
-        )
-        .ignoresSafeArea()
-        .navigationTitle("TikTok")
-        .navigationBarTitleDisplayMode(.inline)
-    }
-}
+//// MARK: - TikTokView
+//
+//private let tiktokJS = """
+//function isLoginPage() {
+//  const path = window.location.pathname;
+//  return path.startsWith("/login");
+//}
+//
+//function isHomeFeed() {
+//  const path = window.location.pathname;
+//  // main home feed is "/" or localized variants; adjust as needed
+//  const isRoot = path === "/" || path === "";
+//  return isRoot && !isLoginPage();
+//}
+//
+//function cleanTikTok() {
+//  if (!isHomeFeed() || isLoginPage()) return;
+//
+//  const selectors = [
+//    'div[data-e2e="recommend-side-panel"]',   // right sidebar
+//    'div[data-e2e="trending-hashtag-panel"]', // trending panel
+//    'div[data-e2e="footer"]'                  // footer clutter
+//  ];
+//  selectors.forEach(sel => {
+//    document.querySelectorAll(sel).forEach(el => {
+//      el.style.display = "none";
+//    });
+//  });
+//}
+//
+//cleanTikTok();
+//setInterval(cleanTikTok, 3000);
+//"""
+//
+//struct TikTokCleanerView: View {
+//    var body: some View {
+//        VStack(spacing: 12) {
+//            ProgressView()
+//            Text("Opening TikTok in Safari…")
+//                .font(.footnote)
+//                .foregroundColor(.secondary)
+//        }
+//        .onAppear {
+//            if let url = URL(string: "https://www.tiktok.com/") {
+//                UIApplication.shared.open(url)
+//            }
+//        }
+//        .navigationTitle("TikTok")
+//        .navigationBarTitleDisplayMode(.inline)
+//    }
+//}
