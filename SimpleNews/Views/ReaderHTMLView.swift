@@ -11,6 +11,7 @@ import WebKit
 struct ReaderHTMLView: UIViewRepresentable {
     let html: String
     @Binding var height: CGFloat
+    @ObservedObject var controller: ReaderController  // NEW
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
@@ -20,17 +21,25 @@ struct ReaderHTMLView: UIViewRepresentable {
         let webView = WKWebView()
         webView.navigationDelegate = context.coordinator
 
-        // Transparent background so app’s SwiftUI background shows through
         webView.isOpaque = false
         webView.backgroundColor = .clear
         webView.scrollView.backgroundColor = .clear
-        webView.scrollView.isScrollEnabled = false   // parent ScrollView will scroll
+        webView.scrollView.isScrollEnabled = false
+
+        // Expose this instance to the controller (on main queue)
+        DispatchQueue.main.async {
+            controller.webView = webView
+            controller.isLoaded = false
+        }
 
         return webView
     }
-
+    
     func updateUIView(_ uiView: WKWebView, context: Context) {
-        uiView.loadHTMLString(html, baseURL: nil)
+        // Simple guard to avoid endless reloads
+        if !uiView.isLoading && uiView.url == nil {
+            uiView.loadHTMLString(html, baseURL: nil)
+        }
     }
 
     class Coordinator: NSObject, WKNavigationDelegate {
@@ -41,10 +50,14 @@ struct ReaderHTMLView: UIViewRepresentable {
         }
 
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-            // Reinforce transparency after load to avoid white flash
             webView.isOpaque = false
             webView.backgroundColor = .clear
             webView.scrollView.backgroundColor = .clear
+
+            DispatchQueue.main.async {
+                self.parent.controller.isLoaded = true
+                print("Reader loaded: isLoaded = \(self.parent.controller.isLoaded)")
+            }
 
             webView.evaluateJavaScript("document.body.scrollHeight") { result, error in
                 guard error == nil, let height = result as? CGFloat else { return }
