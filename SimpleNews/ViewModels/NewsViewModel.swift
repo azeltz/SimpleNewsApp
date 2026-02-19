@@ -124,7 +124,7 @@ final class NewsViewModel: ObservableObject {
             for article in combined {
                 var mutable = article
                 let modelTags = await NewsTaggerService.shared.tags(for: article)
-                print("ML tags for article:", mutable.title, "->", modelTags)
+                //print("ML tags for article:", mutable.title, "->", modelTags)
                 mutable.aiTags = modelTags
                 taggedCombined.append(mutable)
             }

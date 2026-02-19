@@ -30,6 +30,24 @@ func clippedText(from fullText: String, maxCharacters: Int = 1000) -> String {
     return String(fullText[..<idx]) + "…"
 }
 
+func isGoogleNewsHost(_ host: String?) -> Bool {
+    guard let host = host?.lowercased() else { return false }
+    if host == "news.google.com" || host.hasSuffix(".news.google.com") { return true }
+    if host.hasPrefix("news.google.") { return true }
+    return false
+}
+
+func unwrapGoogleNewsRedirect(_ url: URL?) -> URL? {
+    guard let url else { return nil }
+    guard isGoogleNewsHost(url.host) else { return url }
+    guard let comps = URLComponents(url: url, resolvingAgainstBaseURL: false) else { return url }
+    if let target = comps.queryItems?.first(where: { $0.name == "url" || $0.name == "u" })?.value,
+       let unwrapped = URL(string: target) {
+        return unwrapped
+    }
+    return url
+}
+
 fileprivate let articleDateFormatter: DateFormatter = {
     let f = DateFormatter()
     f.dateStyle = .medium
@@ -233,6 +251,16 @@ struct ArticleDetailView: View {
                             Text(error)
                                 .font(.footnote)
                                 .foregroundColor(.secondary)
+                        } else {
+                            // If the resolved URL is still a Google News redirect, advise using Safari reader
+                            if let baseURL = article.url {
+                                let resolved = unwrapGoogleNewsRedirect(baseURL) ?? baseURL
+                                if isGoogleNewsHost(resolved.host) {
+                                    Text("Inline reader isn’t available for this Google News redirect. Use ‘Open in reader’ instead.")
+                                        .font(.footnote)
+                                        .foregroundColor(.secondary)
+                                }
+                            }
                         }
                     }
                 }
@@ -284,9 +312,11 @@ struct ArticleDetailView: View {
             }
         }
         .task {
-            if enableInLineView, let url = article.url {
-                await readerLoader.load(from: url)
-            }
+            guard enableInLineView else { return }
+            guard let baseURL = article.url else { return }
+            let resolved = unwrapGoogleNewsRedirect(baseURL) ?? baseURL
+            print("Inline reader loading:", resolved.absoluteString)
+            await readerLoader.load(from: resolved)
         }
     }
     
@@ -543,3 +573,4 @@ extension UIImage {
         }
     }
 }
+

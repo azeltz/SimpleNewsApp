@@ -43,7 +43,7 @@ final class NewsTaggerService {
         // Use the actual dimension from training: max index + 1, aligned with idf length
         // let maxIndex = vocabulary.values.max() ?? -1
         self.featureCount = idf.count
-        print("NewsTaggerService init: featureCount =", featureCount, "tags =", tags.count)
+        //print("NewsTaggerService init: featureCount =", featureCount, "tags =", tags.count)
     }
 
     /// Public async API: get tags for an article.
@@ -90,7 +90,7 @@ final class NewsTaggerService {
         }
 
         guard !tfCounts.isEmpty else {
-            print("NewsTaggerService: no vocab hits for text, tokens=\(tokens.prefix(10))")
+            //print("NewsTaggerService: no vocab hits for text, tokens=\(tokens.prefix(10))")
             return []
         }
 
@@ -117,7 +117,7 @@ final class NewsTaggerService {
                 nonZeroCount += 1
             }
         }
-        print("NewsTaggerService: non-zero TF-IDF features =", nonZeroCount)
+        //print("NewsTaggerService: non-zero TF-IDF features =", nonZeroCount)
 
         // 4) Run Core ML model (linear logits)
         let input = NewsTaggerInput(features: featuresArray)
@@ -141,7 +141,7 @@ final class NewsTaggerService {
         }
 
         let sortedAll = tagProbs.sorted { $0.1 > $1.1 }
-        print("NewsTaggerService: top tags =", sortedAll.prefix(5))
+        //print("NewsTaggerService: top tags =", sortedAll.prefix(5))
 
         // 5) Threshold and sort
         let threshold = 0.2
