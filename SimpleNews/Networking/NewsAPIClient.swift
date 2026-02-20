@@ -36,39 +36,55 @@ struct NewsdataArticle: Codable {
 
         return Article(
             id: UUID().uuidString,
-            title: title ?? "Untitled",
-            description: description,
-            content: content,
+            title: (title ?? "Untitled").decodedHTMLEntities,
+            description: description?.decodedHTMLEntities,
+            content: content?.decodedHTMLEntities,
             imageURL: URL(string: image_url ?? ""),
-            source: source_id,
+            source: source_id?.decodedHTMLEntities,
             category: category?.first,
             publishedAt: date,
             url: URL(string: link ?? ""),
             isSaved: false,
             liked: nil,
-            aiTags: tags ?? []
+            aiTags: (tags ?? []).map { $0.decodedHTMLEntities }
         )
     }
 }
-
 
 final class NewsAPIClient {
     private let apiKey = "pub_8cd7ea8761d74a95bea7b79a5c6cb8dd"
     private let baseURL = URL(string: "https://newsdata.io/api/1/latest")!
 
     func fetchArticles(params: [String: String]) async throws -> [Article] {
-            var components = URLComponents(url: baseURL, resolvingAgainstBaseURL: false)!
-            var queryItems = [URLQueryItem(name: "apikey", value: apiKey)]
+        var components = URLComponents(url: baseURL, resolvingAgainstBaseURL: false)!
+        var queryItems = [URLQueryItem(name: "apikey", value: apiKey)]
 
-            for (key, value) in params {
-                queryItems.append(URLQueryItem(name: key, value: value))
-            }
+        for (key, value) in params {
+            queryItems.append(URLQueryItem(name: key, value: value))
+        }
 
-            components.queryItems = queryItems
+        components.queryItems = queryItems
 
-            let url = components.url!
-            let (data, _) = try await URLSession.shared.data(from: url)
-            let decoded = try JSONDecoder().decode(NewsdataResponse.self, from: data)
-            return decoded.results.map { $0.toArticle() }
+        let url = components.url!
+        let (data, _) = try await URLSession.shared.data(from: url)
+        let decoded = try JSONDecoder().decode(NewsdataResponse.self, from: data)
+        return decoded.results.map { $0.toArticle() }
+    }
+}
+
+// MARK: - HTML entities decoding
+
+extension String {
+    var decodedHTMLEntities: String {
+        guard let data = self.data(using: .utf8) else { return self }
+        let options: [NSAttributedString.DocumentReadingOptionKey: Any] = [
+            .documentType: NSAttributedString.DocumentType.html,
+            .characterEncoding: String.Encoding.utf8.rawValue
+        ]
+        if let attr = try? NSAttributedString(data: data, options: options, documentAttributes: nil) {
+            return attr.string.replacingOccurrences(of: "\u{00A0}", with: " ")
+        } else {
+            return self
         }
     }
+}

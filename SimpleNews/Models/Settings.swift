@@ -1,14 +1,19 @@
+//
 // Settings.swift
+// SimpleNews
+//
+// Created by Amir Zeltzer on 2/13/26.
+//
 
 import Foundation
 
 enum NewsLanguage: String, CaseIterable, Identifiable, Codable {
-    case en  // English
-    case he  // Hebrew
-    case es  // Spanish
-    case fr  // French
-    case de  // German
-    case it  // Italian
+    case en // English
+    case he // Hebrew
+    case es // Spanish
+    case fr // French
+    case de // German
+    case it // Italian
 
     var id: String { rawValue }
 
@@ -86,4 +91,13 @@ struct AppSettings: Codable {
     var showReddit: Bool = true
     var showTikTok: Bool = true
     var showLinkedIn: Bool = true
+
+    // Google News favorites dynamic feed
+    var enableGoogleNewsFavorites: Bool = true
+    /// User-entered Google News keywords (favorites editor).
+    var googleNewsUserKeywords: [String] = []
+    /// Whether to include built‑in fixed favorites (teams/topics) in Google News.
+    var enableFixedGoogleNewsFavorites: Bool = true
+    /// Last combined keyword list successfully synced to the backend (fixed favorites + user keywords).
+    var lastSyncedGoogleNewsKeywords: [String] = []
 }

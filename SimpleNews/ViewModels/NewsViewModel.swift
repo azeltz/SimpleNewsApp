@@ -1,8 +1,8 @@
 //
-//  NewsViewModel.swift
-//  SimpleNews
+// NewsViewModel.swift
+// SimpleNews
 //
-//  Created by Amir Zeltzer on 2/13/26.
+// Created by Amir Zeltzer on 2/13/26.
 //
 
 import Foundation
@@ -14,11 +14,14 @@ final class NewsViewModel: ObservableObject {
     @Published var errorMessage: String? = nil
     @Published var tagWeights: [String: Double] = TagWeightsStorage.load()
     @Published var settings: AppSettings = AppSettings.load()
-    
+
     @Published var searchText: String = ""
     @Published var searchInTitle = true
     @Published var searchInDescription = true
     @Published var searchInTags = true
+
+    /// Last time the Worker snapshot was taken (meta:last_snapshot_at).
+    @Published var lastSnapshotAt: Date? = nil
 
     var filteredArticles: [Article] {
         guard !searchText.isEmpty else { return articles }
@@ -30,9 +33,11 @@ final class NewsViewModel: ObservableObject {
             if searchInTitle {
                 matches = matches || article.title.lowercased().contains(query)
             }
+
             if searchInDescription, let desc = article.description?.lowercased() {
                 matches = matches || desc.contains(query)
             }
+
             if searchInTags {
                 let tags = article.tags.joined(separator: " ").lowercased()
                 matches = matches || tags.contains(query)
@@ -53,6 +58,22 @@ final class NewsViewModel: ObservableObject {
     private let client = NewsAPIClient()
     private let rssClient = RSSBackendClient()
     private var lastFetchDate: Date? = nil
+
+    /// Fixed favorite teams/players for Google News dynamic keywords.
+    let fixedFavoriteKeywords: [String] = [
+        "NBA",
+        "Dallas Mavericks",
+        "Texas A&M Aggies",
+        "Maccabi Tel Aviv",
+        "מכבי תל אביב",
+        "Dallas Cowboys",
+        "Manchester United",
+        "FC Barcelona",
+        "FC Dallas",
+        "Deni Avdija",
+        "Israel national team",
+        "נבחרת ישראל"
+    ]
 
     // MARK: - Saved Articles Storage
 
@@ -86,6 +107,7 @@ final class NewsViewModel: ObservableObject {
                 return
             }
         }
+
         await fetchArticles()
     }
 
@@ -99,10 +121,10 @@ final class NewsViewModel: ObservableObject {
             let params = QueryBuilder.queryParams(settings: settings, tagWeights: tagWeights)
 
             async let newsdataArticles = client.fetchArticles(params: params)
-            async let rssArticles = rssClient.fetchArticles()
+            async let rssResult = rssClient.fetchArticles()
 
             let fetchedNewsdata = try await newsdataArticles
-            let fetchedRSS = try await rssArticles
+            let (fetchedRSS, snapshotDate) = try await rssResult
 
             // 1. Combine
             var combined = fetchedRSS + fetchedNewsdata // order doesn't matter
@@ -124,13 +146,13 @@ final class NewsViewModel: ObservableObject {
             for article in combined {
                 var mutable = article
                 let modelTags = await NewsTaggerService.shared.tags(for: article)
-                //print("ML tags for article:", mutable.title, "->", modelTags)
                 mutable.aiTags = modelTags
                 taggedCombined.append(mutable)
             }
 
             // 3. Score and sort combined array
             let preferred = Set(settings.preferredSources.map { $0.lowercased() })
+
             let scored = taggedCombined
                 .map { article -> (Article, Double) in
                     let tag = article.category?.lowercased() ?? ""
@@ -146,15 +168,18 @@ final class NewsViewModel: ObservableObject {
                     let (b, bScore) = rhs
                     let aDate = a.publishedAt ?? .distantPast
                     let bDate = b.publishedAt ?? .distantPast
+
                     if aDate != bDate {
                         return aDate > bDate // newer first
                     }
+
                     return aScore > bScore
                 }
                 .map { $0.0 }
 
             self.articles = scored
             self.lastFetchDate = Date()
+            self.lastSnapshotAt = snapshotDate
         } catch {
             self.errorMessage = "Failed to load news: \(error.localizedDescription)"
         }
@@ -193,6 +218,7 @@ final class NewsViewModel: ObservableObject {
         if let index = articles.firstIndex(of: article) {
             articles[index].liked = true
         }
+
         updateTagWeights(for: article, delta: 1.0)
     }
 
@@ -200,6 +226,7 @@ final class NewsViewModel: ObservableObject {
         if let index = articles.firstIndex(of: article) {
             articles[index].liked = false
         }
+
         updateTagWeights(for: article, delta: -1.0)
     }
 
@@ -236,5 +263,31 @@ final class NewsViewModel: ObservableObject {
             tagWeights[tag] = 1.0
             TagWeightsStorage.save(tagWeights)
         }
+    }
+
+    // MARK: - Google News favorites keyword sync
+
+    /// Computes the combined favorites keyword list (fixed + user-defined) from current settings.
+    func combinedGoogleNewsKeywords(from settings: AppSettings) -> [String] {
+        let userKeywords = settings.googleNewsUserKeywords
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+
+        var all: [String] = []
+        if settings.enableFixedGoogleNewsFavorites {
+            all.append(contentsOf: fixedFavoriteKeywords)
+        }
+        all.append(contentsOf: userKeywords)
+
+        return all.uniqued().sorted()
+    }
+}
+
+// MARK: - Small helpers
+
+extension Array where Element: Hashable {
+    func uniqued() -> [Element] {
+        var seen = Set<Element>()
+        return filter { seen.insert($0).inserted }
     }
 }

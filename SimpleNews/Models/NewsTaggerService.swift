@@ -140,7 +140,7 @@ final class NewsTaggerService {
             tagProbs.append((tagName, prob))
         }
 
-        let sortedAll = tagProbs.sorted { $0.1 > $1.1 }
+        _ = tagProbs.sorted { $0.1 > $1.1 }
         //print("NewsTaggerService: top tags =", sortedAll.prefix(5))
 
         // 5) Threshold and sort

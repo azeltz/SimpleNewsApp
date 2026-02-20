@@ -1,8 +1,8 @@
 //
-//  HomeView.swift
-//  SimpleNews
+// HomeView.swift
+// SimpleNews
 //
-//  Created by Amir Zeltzer on 2/13/26.
+// Created by Amir Zeltzer on 2/13/26.
 //
 
 import SwiftUI
@@ -23,13 +23,27 @@ struct HomeView: View {
     var body: some View {
         NavigationStack {
             content
-                .navigationTitle("SimpleNews")
+                .navigationTitle("SimpleNews")   // system large title
                 .searchable(
                     text: $viewModel.searchText,
                     placement: .navigationBarDrawer(displayMode: .automatic)
                 )
                 .searchPresentationToolbarBehavior(.avoidHidingContent)
                 .toolbar {
+                    // Subtitle under the large title
+                    ToolbarItem(placement: .principal) {
+                        if let last = viewModel.lastSnapshotAt {
+                            VStack(alignment: .leading, spacing: 0) {
+                                Spacer(minLength: 0) // keeps layout stable
+                                Text("Updated \(last, style: .time)")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        } else {
+                            EmptyView()
+                        }
+                    }
+
                     ToolbarItem(placement: .navigationBarTrailing) {
                         Menu {
                             Section("Search in") {
@@ -43,21 +57,15 @@ struct HomeView: View {
                         .menuActionDismissBehavior(.disabled)
                     }
                 }
-                .task {
-                    await viewModel.loadInitial()
-                }
-                .refreshable {
-                    await viewModel.refreshIfAllowed()
-                }
+                .task { await viewModel.loadInitial() }
+                .refreshable { await viewModel.refreshIfAllowed() }
                 .sheet(item: $selectedArticle) { article in
                     NavigationStack {
                         ArticleDetailView(
                             article: article,
                             showImages: settingsStore.settings.showImages,
                             enableInLineView: settingsStore.settings.enableInLineView,
-                            onToggleSaved: {
-                                viewModel.toggleSaved(article)
-                            }
+                            onToggleSaved: { viewModel.toggleSaved(article) }
                         )
                     }
                 }
@@ -80,6 +88,7 @@ struct HomeView: View {
                     Task { await viewModel.refreshIfAllowed(ignoreCooldown: true) }
                 }
             }
+            .padding()
         } else {
             List(viewModel.filteredArticles) { article in
                 ArticleRow(
@@ -88,12 +97,8 @@ struct HomeView: View {
                     showDescription: settingsStore.settings.showDescriptions,
                     isExpanded: expandedArticleIDs.contains(article.id),
                     showTags: settingsStore.settings.enableTags,
-                    onToggleSaved: {
-                        viewModel.toggleSaved(article)
-                    },
-                    onOpenDetail: {
-                        selectedArticle = article
-                    },
+                    onToggleSaved: { viewModel.toggleSaved(article) },
+                    onOpenDetail: { selectedArticle = article },
                     onOpenLink: {
                         if let url = article.url {
                             safariItem = SafariItem(url: url)
