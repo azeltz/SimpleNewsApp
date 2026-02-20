@@ -37,7 +37,7 @@ struct HomeView: View {
                                 if viewModel.isLoading {
                                     ProgressView()
                                         .scaleEffect(0.7)
-                                    Text("Updating…")
+                                    Text("Updating news…")
                                         .font(.caption)
                                         .foregroundColor(.secondary)
                                 } else if let snapshot = viewModel.lastSnapshotAt {

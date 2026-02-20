@@ -53,6 +53,7 @@ final class NewsViewModel: ObservableObject {
 
             var updated = initialArticles
 
+            // Tag each article
             for index in updated.indices {
                 let article = updated[index]
                 let tags = await NewsTaggerService.shared.tags(for: article)
@@ -61,6 +62,7 @@ final class NewsViewModel: ObservableObject {
                 newArticle.aiTags = tags
                 updated[index] = newArticle
 
+                // Incremental UI update
                 if index < self.articles.count,
                    self.articles[index].id == newArticle.id {
                     self.articles[index] = newArticle
@@ -69,14 +71,13 @@ final class NewsViewModel: ObservableObject {
                 }
             }
 
-            // After all tags are in, re‑score using aiTags + preferred sources.
+            // Final re‑score using aiTags + preferred sources
             let currentSettings = self.settings
             let currentTagWeights = self.tagWeights
             let preferred = Set(currentSettings.preferredSources.map { $0.lowercased() })
 
             let rescored = updated
                 .map { article -> (Article, Double) in
-                    // Prefer explicit category; fall back to first aiTag
                     let baseTag: String? = {
                         if let c = article.category, !c.isEmpty { return c }
                         return article.aiTags.first
@@ -97,13 +98,13 @@ final class NewsViewModel: ObservableObject {
                     let (b, bScore) = rhs
                     let aDate = a.publishedAt ?? .distantPast
                     let bDate = b.publishedAt ?? .distantPast
-
                     if aDate != bDate { return aDate > bDate }
                     return aScore > bScore
                 }
                 .map { $0.0 }
 
             self.articles = rescored
+            ArticlesCacheStorage.save(rescored)
         }
     }
 
@@ -196,7 +197,7 @@ final class NewsViewModel: ObservableObject {
 
             // Fetch both feeds in parallel
             async let newsdataArticles = client.fetchArticles(params: params)
-            async let rssResult = rssClient.fetchArticles()
+            async let rssResult = rssClient.fetchArticles()   // returns ([Article], Date)
 
             let fetchedNewsdata = try await newsdataArticles
             let (fetchedRSS, snapshotDate) = try await rssResult
@@ -232,7 +233,7 @@ final class NewsViewModel: ObservableObject {
                     let (b, bScore) = rhs
                     let aDate = a.publishedAt ?? .distantPast
                     let bDate = b.publishedAt ?? .distantPast
-                    if aDate != bDate { return aDate > bDate }
+                    if aDate != bDate { return aDate > bDate }   // newer first
                     return aScore > bScore
                 }
                 .map { $0.0 }
@@ -246,12 +247,12 @@ final class NewsViewModel: ObservableObject {
             // 4) Enrich with aiTags + final re‑score in the background
             startBackgroundTagging(for: scored)
 
+            isLoading = false
         } catch {
             self.errorMessage = "Failed to load news: \(error.localizedDescription)"
-            self.isLoading = false
+            isLoading = false
         }
     }
-
     
     // MARK: - Saved helpers
 
