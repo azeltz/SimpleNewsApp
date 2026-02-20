@@ -16,11 +16,8 @@ struct SettingsView: View {
     var body: some View {
         Form {
             displaySection
-
             sourcesSection
-            
             languageAndCountrySection
-            
             interestsSection
         }
         .navigationTitle("Settings")
@@ -33,46 +30,48 @@ struct SettingsView: View {
     }
 
     private func applyChanges() {
-            settingsStore.settings = draftSettings
-            settingsStore.save()
-        }
+        settingsStore.settings = draftSettings
+        settingsStore.save()
+    }
 
     // MARK: - Display
 
-        private var displaySection: some View {
-            Section("Display") {
-                Toggle("Show images in list", isOn: $draftSettings.showImages)
-                Toggle("Show descriptions in list", isOn: $draftSettings.showDescriptions)
+    private var displaySection: some View {
+        Section("Display") {
+            Toggle("Show images in list", isOn: $draftSettings.showImages)
+            Toggle("Show descriptions in list", isOn: $draftSettings.showDescriptions)
 
-                Toggle("Show inline article view", isOn: $draftSettings.enableInLineView)
+            Toggle("Show inline article view", isOn: $draftSettings.enableInLineView)
 
-                Toggle("Ask before removing saved articles", isOn: $draftSettings.confirmUnsaveInSavedTab)
+            Toggle("Ask before removing saved articles", isOn: $draftSettings.confirmUnsaveInSavedTab)
 
-                // Show/hide the Social tab
-                Toggle("Show Social tab", isOn: $draftSettings.showSocialTab)
-                    .onChange(of: draftSettings.showSocialTab) {
-                        applyChanges()
-                    }
-            }
-        }
-
-        // MARK: - Sources entry
-
-        private var sourcesSection: some View {
-            Section(header: Text("Sources")) {
-                // Manage news sources
-                NavigationLink("Manage news sources") {
-                    NewsSourcesSettingsView(viewModel: viewModel)
+            Toggle("Show Social tab", isOn: $draftSettings.showSocialTab)
+                .onChange(of: draftSettings.showSocialTab) {
+                    applyChanges()
                 }
 
-                // Manage social sources – only when Social tab is on
-                if draftSettings.showSocialTab {
-                    NavigationLink("Manage social sources") {
-                        SocialSourcesSettingsView()
-                    }
+            Button("Clear cached web content") {
+                viewModel.clearCaches()
+            }
+            .foregroundColor(.red)
+        }
+    }
+
+    // MARK: - Sources entry
+
+    private var sourcesSection: some View {
+        Section(header: Text("Sources")) {
+            NavigationLink("Manage news sources") {
+                NewsSourcesSettingsView(viewModel: viewModel)
+            }
+
+            if draftSettings.showSocialTab {
+                NavigationLink("Manage social sources") {
+                    SocialSourcesSettingsView()
                 }
             }
         }
+    }
 
     // MARK: - Combined languages + countries
 

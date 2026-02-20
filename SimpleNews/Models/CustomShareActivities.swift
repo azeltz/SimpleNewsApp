@@ -9,8 +9,6 @@ import UIKit
 
 // MARK: - Global helper to present a secondary share sheet
 
-import UIKit
-
 private func topViewController(from root: UIViewController?) -> UIViewController? {
     guard let root = root else { return nil }
 
@@ -60,17 +58,19 @@ func presentShareSheet(for items: [Any]) {
 
 // MARK: - Text → Image helper
 
-func imageFrom(text: String, title: String?) -> UIImage {
-    let size = CGSize(width: 800, height: 1200)
+/// Renders a white image with a large title, source line, and big body text.
+func imageFrom(text: String, title: String?, source: String?) -> UIImage {
+    let size = CGSize(width: 1080, height: 1350)
     let renderer = UIGraphicsImageRenderer(size: size)
 
     return renderer.image { _ in
         // Background
-        UIColor.systemBackground.setFill()
+        UIColor.white.setFill()
         UIBezierPath(rect: CGRect(origin: .zero, size: size)).fill()
 
-        let titleFont = UIFont.boldSystemFont(ofSize: 24)
-        let bodyFont = UIFont.systemFont(ofSize: 16)
+        let titleFont = UIFont.boldSystemFont(ofSize: 40)
+        let sourceFont = UIFont.systemFont(ofSize: 20)
+        let bodyFont   = UIFont.systemFont(ofSize: 26)
 
         var y: CGFloat = 40
 
@@ -78,25 +78,44 @@ func imageFrom(text: String, title: String?) -> UIImage {
         if let title, !title.isEmpty {
             let attrs: [NSAttributedString.Key: Any] = [
                 .font: titleFont,
-                .foregroundColor: UIColor.label
+                .foregroundColor: UIColor.black
             ]
-            let rect = CGRect(x: 24, y: y, width: size.width - 48, height: .greatestFiniteMagnitude)
+            let rect = CGRect(x: 32, y: y, width: size.width - 64, height: .greatestFiniteMagnitude)
             let str = NSAttributedString(string: title, attributes: attrs)
             let bounds = str.boundingRect(
                 with: rect.size,
                 options: [.usesLineFragmentOrigin, .usesFontLeading],
                 context: nil
             )
-            str.draw(in: CGRect(x: 24, y: y, width: rect.width, height: ceil(bounds.height)))
+            str.draw(in: CGRect(x: 32, y: y, width: rect.width, height: ceil(bounds.height)))
+            y += ceil(bounds.height) + 8
+        }
+
+        // Source (smaller, below title)
+        if let source, !source.isEmpty {
+            let attrs: [NSAttributedString.Key: Any] = [
+                .font: sourceFont,
+                .foregroundColor: UIColor.darkGray
+            ]
+            let rect = CGRect(x: 32, y: y, width: size.width - 64, height: .greatestFiniteMagnitude)
+            let str = NSAttributedString(string: source, attributes: attrs)
+            let bounds = str.boundingRect(
+                with: rect.size,
+                options: [.usesLineFragmentOrigin, .usesFontLeading],
+                context: nil
+            )
+            str.draw(in: CGRect(x: 32, y: y, width: rect.width, height: ceil(bounds.height)))
             y += ceil(bounds.height) + 24
+        } else {
+            y += 16
         }
 
         // Body
         let bodyAttrs: [NSAttributedString.Key: Any] = [
             .font: bodyFont,
-            .foregroundColor: UIColor.label
+            .foregroundColor: UIColor.black
         ]
-        let bodyRect = CGRect(x: 24, y: y, width: size.width - 48, height: size.height - y - 24)
+        let bodyRect = CGRect(x: 32, y: y, width: size.width - 64, height: size.height - y - 40)
         let bodyStr = NSAttributedString(string: text, attributes: bodyAttrs)
         bodyStr.draw(
             with: bodyRect,
@@ -140,6 +159,7 @@ final class CopyLinkActivity: UIActivity {
 final class ExportPDFActivity: UIActivity {
     private var bodyText: String?
     private var titleText: String?
+    private var sourceText: String?
 
     override var activityTitle: String? { "Export as PDF" }
     override var activityImage: UIImage? { UIImage(systemName: "doc.richtext") }
@@ -153,6 +173,7 @@ final class ExportPDFActivity: UIActivity {
         let strings = activityItems.compactMap { $0 as? String }
         if strings.count > 0 { bodyText = strings[0] }
         if strings.count > 1 { titleText = strings[1] }
+        if strings.count > 2 { sourceText = strings[2] } // optional source
     }
 
     override func perform() {
@@ -176,20 +197,70 @@ final class ExportPDFActivity: UIActivity {
 
         let data = renderer.pdfData { ctx in
             ctx.beginPage()
-            let attrs: [NSAttributedString.Key: Any] = [
-                .font: UIFont.systemFont(ofSize: 14)
-            ]
 
-            let full = NSMutableAttributedString()
+            let titleFont  = UIFont.boldSystemFont(ofSize: 24)  // bigger title
+            let sourceFont = UIFont.systemFont(ofSize: 14)
+            let bodyFont   = UIFont.systemFont(ofSize: 14)
+
+            let insetRect = pageRect.insetBy(dx: 32, dy: 32)
+            var y = insetRect.minY
+
+            // Title
             if let titleText {
-                full.append(NSAttributedString(
-                    string: titleText + "\n\n",
-                    attributes: [.font: UIFont.boldSystemFont(ofSize: 18)]
-                ))
+                let titleAttr = NSAttributedString(
+                    string: titleText,
+                    attributes: [
+                        .font: titleFont,
+                        .foregroundColor: UIColor.black
+                    ]
+                )
+                let bounds = titleAttr.boundingRect(
+                    with: CGSize(width: insetRect.width, height: .greatestFiniteMagnitude),
+                    options: [.usesLineFragmentOrigin, .usesFontLeading],
+                    context: nil
+                )
+                titleAttr.draw(in: CGRect(x: insetRect.minX,
+                                          y: y,
+                                          width: insetRect.width,
+                                          height: ceil(bounds.height)))
+                y += ceil(bounds.height) + 4
             }
-            full.append(NSAttributedString(string: bodyText, attributes: attrs))
 
-            full.draw(in: pageRect.insetBy(dx: 32, dy: 32))
+            // Source – black text
+            if let sourceText, !sourceText.isEmpty {
+                let sourceAttr = NSAttributedString(
+                    string: sourceText,
+                    attributes: [
+                        .font: sourceFont,
+                        .foregroundColor: UIColor.black
+                    ]
+                )
+                let bounds = sourceAttr.boundingRect(
+                    with: CGSize(width: insetRect.width, height: .greatestFiniteMagnitude),
+                    options: [.usesLineFragmentOrigin, .usesFontLeading],
+                    context: nil
+                )
+                sourceAttr.draw(in: CGRect(x: insetRect.minX,
+                                           y: y,
+                                           width: insetRect.width,
+                                           height: ceil(bounds.height)))
+                y += ceil(bounds.height) + 16
+            } else {
+                y += 8
+            }
+
+            // Body
+            let bodyAttr = NSAttributedString(
+                string: bodyText,
+                attributes: [
+                    .font: bodyFont,
+                    .foregroundColor: UIColor.black
+                ]
+            )
+            bodyAttr.draw(in: CGRect(x: insetRect.minX,
+                                     y: y,
+                                     width: insetRect.width,
+                                     height: insetRect.maxY - y))
         }
 
         let url = URL(fileURLWithPath: NSTemporaryDirectory())
@@ -212,6 +283,7 @@ final class ExportPDFActivity: UIActivity {
 final class ExportImageActivity: UIActivity {
     private var bodyText: String?
     private var titleText: String?
+    private var sourceText: String?
 
     override var activityTitle: String? { "Export as Image" }
     override var activityImage: UIImage? { UIImage(systemName: "photo") }
@@ -225,6 +297,7 @@ final class ExportImageActivity: UIActivity {
         let strings = activityItems.compactMap { $0 as? String }
         if strings.count > 0 { bodyText = strings[0] }
         if strings.count > 1 { titleText = strings[1] }
+        if strings.count > 2 { sourceText = strings[2] } // optional source
     }
 
     override func perform() {
@@ -236,7 +309,7 @@ final class ExportImageActivity: UIActivity {
             return
         }
 
-        let image = imageFrom(text: bodyText, title: titleText)
+        let image = imageFrom(text: bodyText, title: titleText, source: sourceText)
         print("ExportImageActivity: generated image size = \(image.size)")
         presentShareSheet(for: [image])
         activityDidFinish(true)

@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import WebKit
 
 @MainActor
 final class NewsViewModel: ObservableObject {
@@ -83,9 +84,9 @@ final class NewsViewModel: ObservableObject {
             case let (da?, db?):
                 return da > db // newer first
             case (nil, nil):
-                return a.title < b.title // fallback stable order
+                return a.title < b.title
             case (nil, _?):
-                return false // items with date go first
+                return false
             case (_?, nil):
                 return true
             }
@@ -103,7 +104,7 @@ final class NewsViewModel: ObservableObject {
     func refreshIfAllowed(ignoreCooldown: Bool = false) async {
         if let last = lastFetchDate, !ignoreCooldown {
             let diff = Date().timeIntervalSince(last)
-            if diff < 10 * 60 { // 10 minutes
+            if diff < 10 * 60 {
                 return
             }
         }
@@ -126,10 +127,8 @@ final class NewsViewModel: ObservableObject {
             let fetchedNewsdata = try await newsdataArticles
             let (fetchedRSS, snapshotDate) = try await rssResult
 
-            // 1. Combine
-            var combined = fetchedRSS + fetchedNewsdata // order doesn't matter
+            var combined = fetchedRSS + fetchedNewsdata
 
-            // 2. De-duplicate by URL
             var seen = Set<URL>()
             combined = combined.filter { article in
                 guard let url = article.url else { return true }
@@ -141,7 +140,6 @@ final class NewsViewModel: ObservableObject {
                 }
             }
 
-            // 2b. Run Core ML tagger for each article to populate article.tags
             var taggedCombined: [Article] = []
             for article in combined {
                 var mutable = article
@@ -150,7 +148,6 @@ final class NewsViewModel: ObservableObject {
                 taggedCombined.append(mutable)
             }
 
-            // 3. Score and sort combined array
             let preferred = Set(settings.preferredSources.map { $0.lowercased() })
 
             let scored = taggedCombined
@@ -170,7 +167,7 @@ final class NewsViewModel: ObservableObject {
                     let bDate = b.publishedAt ?? .distantPast
 
                     if aDate != bDate {
-                        return aDate > bDate // newer first
+                        return aDate > bDate
                     }
 
                     return aScore > bScore
@@ -190,7 +187,6 @@ final class NewsViewModel: ObservableObject {
     // MARK: - Saved
 
     func toggleSaved(_ article: Article) {
-        // Update live feed flag
         if let index = articles.firstIndex(of: article) {
             articles[index].isSaved.toggle()
         }
@@ -198,12 +194,9 @@ final class NewsViewModel: ObservableObject {
         guard let url = article.url else { return }
         let urlString = url.absoluteString
 
-        // Check if already saved by URL
         if let existingIndex = savedArticles.firstIndex(where: { $0.url?.absoluteString == urlString }) {
-            // Remove from saved
             savedArticles.remove(at: existingIndex)
         } else {
-            // Add to saved
             let saved = SavedArticle(from: article)
             savedArticles.append(saved)
             sortSavedArticles()
@@ -231,14 +224,12 @@ final class NewsViewModel: ObservableObject {
     }
 
     private func updateTagWeights(for article: Article, delta: Double) {
-        // Prefer explicit category if present
         if let category = article.category, !category.isEmpty {
             tagWeights[category.lowercased(), default: 0] += delta
             TagWeightsStorage.save(tagWeights)
             return
         }
 
-        // Fall back to first AI tag if available
         if let firstAiTag = article.aiTags.first {
             tagWeights[firstAiTag.lowercased(), default: 0] += delta
             TagWeightsStorage.save(tagWeights)
@@ -267,7 +258,6 @@ final class NewsViewModel: ObservableObject {
 
     // MARK: - Google News favorites keyword sync
 
-    /// Computes the combined favorites keyword list (fixed + user-defined) from current settings.
     func combinedGoogleNewsKeywords(from settings: AppSettings) -> [String] {
         let userKeywords = settings.googleNewsUserKeywords
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
@@ -280,6 +270,22 @@ final class NewsViewModel: ObservableObject {
         all.append(contentsOf: userKeywords)
 
         return all.uniqued().sorted()
+    }
+
+    // MARK: - Cache clearing
+
+    func clearCaches() {
+        // WKWebView website data (reader + Safari)
+        WKWebsiteDataStore.default().removeData(
+            ofTypes: WKWebsiteDataStore.allWebsiteDataTypes(),
+            modifiedSince: .distantPast
+        ) {
+            print("Cleared WKWebView website data")
+        }
+
+        // URLSession / URLCache
+        URLCache.shared.removeAllCachedResponses()
+        print("Cleared URLCache")
     }
 }
 

@@ -61,8 +61,11 @@ struct ShareSheet: UIViewControllerRepresentable {
 
     func makeUIViewController(context: Context) -> UIActivityViewController {
         let customActivities: [UIActivity] = [
-            CopyLinkActivity()
+            CopyLinkActivity(),
+            ExportPDFActivity(),
+            ExportImageActivity()
         ]
+
         return UIActivityViewController(
             activityItems: activityItems,
             applicationActivities: customActivities
@@ -84,6 +87,7 @@ struct ArticleDetailView: View {
     @StateObject private var readerController = ReaderController()
     @State private var readerHeight: CGFloat = 0
     @State private var showShareSheet: Bool = false
+    @State private var cachedShareBody: String = ""
     
     @Environment(\.openURL) private var openURL
     
@@ -102,36 +106,46 @@ struct ArticleDetailView: View {
     
     // Helper to decide what text to show if reader is off or fails
     private func bodyText(for article: Article) -> String? {
+        // If reader HTML already loaded, prefer that
+        if let html = readerLoader.readerHTML, !html.isEmpty {
+            let text = plainText(from: html)
+            if !text.isEmpty { return text }
+        }
+
         if let content = article.content,
            !content.isEmpty,
            content != "ONLY AVAILABLE IN PAID PLANS" {
             return content
         }
-        
+
         if let description = article.description, !description.isEmpty {
             return description
         }
-        
+
         return nil
     }
     
-    // Items to share (URL preferred, fallback to text)
+    // Items to share (URL + cached body + title + source)
     private var shareItems: [Any] {
         var items: [Any] = []
-        
-        // URL for normal sharing + Copy Link
+
         if let url = article.url {
             items.append(url)
         }
-        
-        // Body text (for generic sharing)
-        var body = ""
-        if let text = bodyText(for: article) {
-            body = text
-        }
-        items.append(body)
+
+        items.append(cachedShareBody)
         items.append(article.title)
-        
+
+        let sourceString: String
+        if let source = article.source, !source.isEmpty {
+            sourceString = "Source: \(source)"
+        } else if let host = article.url?.host {
+            sourceString = "Source: \(host)"
+        } else {
+            sourceString = ""
+        }
+        items.append(sourceString)
+
         return items
     }
     
@@ -252,7 +266,6 @@ struct ArticleDetailView: View {
                                 .font(.footnote)
                                 .foregroundColor(.secondary)
                         } else {
-                            // If the resolved URL is still a Google News redirect, advise using Safari reader
                             if let baseURL = article.url {
                                 let resolved = unwrapGoogleNewsRedirect(baseURL) ?? baseURL
                                 if isGoogleNewsHost(resolved.host) {
@@ -270,30 +283,16 @@ struct ArticleDetailView: View {
         .navigationTitle(article.source ?? "")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItemGroup(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .navigationBarTrailing) {
                 Button {
                     onToggleSaved()
                     isSaved.toggle()
                 } label: {
                     Image(systemName: isSaved ? "bookmark.fill" : "bookmark")
                 }
-                
-                // Export menu (PDF / Image from WKWebView content)
-                Menu {
-                    Button("Export as PDF") {
-                        exportAsPDF()
-                    }
-                    .disabled(!readerController.isLoaded)
-                    
-                    Button("Export as Image") {
-                        exportAsImage()
-                    }
-                    .disabled(!readerController.isLoaded)
-                } label: {
-                    Image(systemName: "square.and.arrow.up.on.square")
-                }
-                
-                // Regular share (link + text + Copy Link)
+            }
+
+            ToolbarItem(placement: .navigationBarTrailing) {
                 Button {
                     showShareSheet = true
                 } label: {
@@ -312,22 +311,20 @@ struct ArticleDetailView: View {
             }
         }
         .task {
-            guard enableInLineView else { return }
-            guard let baseURL = article.url else { return }
-            let resolved = unwrapGoogleNewsRedirect(baseURL) ?? baseURL
-            print("Inline reader loading:", resolved.absoluteString)
-            await readerLoader.load(from: resolved)
+            if enableInLineView, let baseURL = article.url {
+                let resolved = unwrapGoogleNewsRedirect(baseURL) ?? baseURL
+                print("Inline reader loading:", resolved.absoluteString)
+                await readerLoader.load(from: resolved)
+            }
+            // Precompute share body once
+            cachedShareBody = bodyText(for: article) ?? ""
         }
     }
     
-    // MARK: - WKWebView-based exports
-    
-    /// Injects a temporary light-mode stylesheet, runs an async action, then removes the stylesheet.
+    // MARK: - WKWebView-based exports (unchanged)
+
     private func withTemporaryLightMode(on webView: WKWebView, completion: @escaping () -> Void) {
-        // Remember old style
         let oldStyle = webView.overrideUserInterfaceStyle
-        
-        // Force light appearance
         webView.overrideUserInterfaceStyle = .light
         
         let injectCSS = """
@@ -361,10 +358,8 @@ struct ArticleDetailView: View {
                 print("withTemporaryLightMode: failed to inject CSS:", error)
             }
             
-            // Run the export after CSS is applied
             completion()
             
-            // Remove style & restore appearance after a short delay
             let removeCSS = """
             (function() {
                 var style = document.getElementById('simpleNews-light-export-style');
@@ -390,7 +385,6 @@ struct ArticleDetailView: View {
             return
         }
         
-        // Inject title at top of body
         let injectTitle = """
         (function() {
             var titleDiv = document.createElement('div');
@@ -436,11 +430,9 @@ struct ArticleDetailView: View {
               let json = String(data: data, encoding: .utf8) else {
             return "\"\(string)\""
         }
-        // Extract just the string part (remove [ and ])
         let trimmed = json.trimmingCharacters(in: CharacterSet(charactersIn: "[]"))
         return trimmed
     }
-
     
     private func exportAsImage() {
         let rawText: String
@@ -474,7 +466,6 @@ extension UIImage {
         
         let inset: CGFloat = 24
         
-        // 1) Draw title at fixed large font
         let titleFont = UIFont.boldSystemFont(ofSize: 50)
         let titleParagraph = NSMutableParagraphStyle()
         titleParagraph.alignment = .left
@@ -486,12 +477,11 @@ extension UIImage {
             .foregroundColor: UIColor.black
         ]
         
-        // Measure title height
         let titleRect = CGRect(
             x: inset,
             y: inset,
             width: targetSize.width - inset * 2,
-            height: targetSize.height // temp large
+            height: targetSize.height
         )
         let titleBounding = (title as NSString).boundingRect(
             with: CGSize(width: titleRect.width, height: .greatestFiniteMagnitude),
@@ -503,7 +493,6 @@ extension UIImage {
         let titleHeight = titleBounding.height
         let spacing: CGFloat = 16
         
-        // 2) Binary‑search body font to fit remaining space
         let bodyMaxHeight = targetSize.height - inset - titleHeight - spacing - inset
         
         let bodyParagraph = NSMutableParagraphStyle()
@@ -541,13 +530,11 @@ extension UIImage {
             .foregroundColor: UIColor.black
         ]
         
-        // 3) Render
         let renderer = UIGraphicsImageRenderer(size: targetSize)
         return renderer.image { _ in
             UIColor.white.setFill()
             UIBezierPath(rect: CGRect(origin: .zero, size: targetSize)).fill()
             
-            // Draw title
             (title as NSString).draw(
                 with: titleRect,
                 options: [.usesLineFragmentOrigin],
@@ -555,7 +542,6 @@ extension UIImage {
                 context: nil
             )
             
-            // Draw body below
             let bodyY = inset + titleHeight + spacing
             let bodyRect = CGRect(
                 x: inset,
@@ -573,4 +559,3 @@ extension UIImage {
         }
     }
 }
-
