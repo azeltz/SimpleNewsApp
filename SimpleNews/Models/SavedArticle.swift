@@ -8,13 +8,16 @@
 import Foundation
 
 struct SavedArticle: Identifiable, Codable, Equatable {
-    let id: String           // stable ID for saved entry
+    let id: String            // stable ID for saved entry
     let title: String
     let description: String?
     let imageURL: URL?
     let source: String?
     let publishedAt: Date?
-    let url: URL?            // used to match with live feed
+    let url: URL?             // used to match with live feed
+
+    // NEW: reader-discovered image
+    var readerImageURL: URL?
 
     init(
         id: String = UUID().uuidString,
@@ -23,7 +26,8 @@ struct SavedArticle: Identifiable, Codable, Equatable {
         imageURL: URL?,
         source: String?,
         publishedAt: Date?,
-        url: URL?
+        url: URL?,
+        readerImageURL: URL? = nil
     ) {
         self.id = id
         self.title = title
@@ -32,6 +36,7 @@ struct SavedArticle: Identifiable, Codable, Equatable {
         self.source = source
         self.publishedAt = publishedAt
         self.url = url
+        self.readerImageURL = readerImageURL
     }
 
     init(from article: Article) {
@@ -41,7 +46,8 @@ struct SavedArticle: Identifiable, Codable, Equatable {
             imageURL: article.imageURL,
             source: article.source,
             publishedAt: article.publishedAt,
-            url: article.url
+            url: article.url,
+            readerImageURL: article.readerImageURL
         )
     }
 }

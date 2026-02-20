@@ -55,7 +55,6 @@ fileprivate let articleDateFormatter: DateFormatter = {
     return f
 }()
 
-// Simple ShareSheet wrapper around UIActivityViewController
 struct ShareSheet: UIViewControllerRepresentable {
     let activityItems: [Any]
 
@@ -76,11 +75,11 @@ struct ShareSheet: UIViewControllerRepresentable {
 }
 
 struct ArticleDetailView: View {
-    let article: Article
+    @Binding var article: Article
     let showImages: Bool
     let enableInLineView: Bool
     let onToggleSaved: () -> Void
-    
+
     @State private var showSafari: Bool = false
     @State private var isSaved: Bool
     @StateObject private var readerLoader = ReaderLoader()
@@ -88,44 +87,106 @@ struct ArticleDetailView: View {
     @State private var readerHeight: CGFloat = 0
     @State private var showShareSheet: Bool = false
     @State private var cachedShareBody: String = ""
-    
+
     @Environment(\.openURL) private var openURL
-    
+
     init(
-        article: Article,
+        article: Binding<Article>,
         showImages: Bool,
         enableInLineView: Bool,
         onToggleSaved: @escaping () -> Void
     ) {
-        self.article = article
+        self._article = article
         self.showImages = showImages
         self.enableInLineView = enableInLineView
         self.onToggleSaved = onToggleSaved
-        _isSaved = State(initialValue: article.isSaved)
+        _isSaved = State(initialValue: article.wrappedValue.isSaved)
     }
-    
-    // Helper to decide what text to show if reader is off or fails
-    private func bodyText(for article: Article) -> String? {
-        // If reader HTML already loaded, prefer that
-        if let html = readerLoader.readerHTML, !html.isEmpty {
-            let text = plainText(from: html)
-            if !text.isEmpty { return text }
+
+    // MARK: - Helpers
+
+    private func cleanReaderText(_ text: String) -> String {
+        let lines = text
+            .components(separatedBy: .newlines)
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+
+        let filtered = lines.filter { line in
+            guard !line.isEmpty else { return false }
+
+            let lower = line.lowercased()
+
+            // 1. Drop pure ISO timestamp / date lines
+            if line.range(of: #"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+\d{2}:\d{2}"#,
+                          options: .regularExpression) != nil {
+                return false
+            }
+
+            // 2. Drop short lines that are just the host or similar
+            if lower == "eurohoops.net" { return false }
+            if lower.contains("eurohoops.net") && lower.count < 40 { return false }
+
+            // 3. Drop sequences that look like "2026-02-20T... Eurohoops.net"
+            if lower.contains("eurohoops.net"),
+               line.range(of: #"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}"#,
+                          options: .regularExpression) != nil {
+                return false
+            }
+
+            return true
         }
 
+        return filtered.joined(separator: "\n")
+    }
+
+    private func bodyText(for article: Article) -> String? {
+        // 1. If feed content/description exists, always use that.
         if let content = article.content,
            !content.isEmpty,
            content != "ONLY AVAILABLE IN PAID PLANS" {
             return content
         }
 
-        if let description = article.description, !description.isEmpty {
+        if let description = article.description,
+           !description.isEmpty {
             return description
+        }
+
+        // 2. Only when BOTH are missing, fall back to cleaned readerHTML.
+        if let html = readerLoader.readerHTML, !html.isEmpty {
+            let text = plainText(from: html)
+            let cleaned = cleanReaderText(text)
+            if !cleaned.isEmpty { return cleaned }
         }
 
         return nil
     }
     
-    // Items to share (URL + cached body + title + source)
+    /// Full text used for PDF / image / share exports.
+    /// Prefer cleaned reader HTML when available so exports match the reader view.
+    private func exportBodyText(for article: Article) -> String {
+        // 1. If we have readerHTML, use the cleaned version (full article).
+        if let html = readerLoader.readerHTML, !html.isEmpty {
+            let text = plainText(from: html)
+            let cleaned = cleanReaderText(text)
+            if !cleaned.isEmpty { return cleaned }
+        }
+
+        // 2. Fall back to feed content/description.
+        if let content = article.content,
+           !content.isEmpty,
+           content != "ONLY AVAILABLE IN PAID PLANS" {
+            return content
+        }
+
+        if let description = article.description,
+           !description.isEmpty {
+            return description
+        }
+
+        // 3. Last resort: empty string.
+        return ""
+    }
+
     private var shareItems: [Any] {
         var items: [Any] = []
 
@@ -146,54 +207,67 @@ struct ArticleDetailView: View {
         }
         items.append(sourceString)
 
+        let timestampString: String
+        if let publishedAt = article.publishedAt {
+            timestampString = articleDateFormatter.string(from: publishedAt)
+        } else {
+            timestampString = ""
+        }
+        items.append(timestampString)
+
         return items
     }
-    
+
+    // MARK: - Body
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                // Header image
-                if showImages, let url = article.imageURL {
-                    AsyncImage(url: url) { phase in
-                        switch phase {
-                        case .empty:
-                            Color.gray.opacity(0.1)
-                        case .success(let image):
-                            image
-                                .resizable()
-                                .scaledToFill()
-                        case .failure:
-                            Color.gray.opacity(0.1)
-                        @unknown default:
-                            Color.gray.opacity(0.1)
+                if showImages {
+                    let headerURL = article.imageURL ?? article.readerImageURL
+                    if let url = headerURL {
+                        AsyncImage(url: url) { phase in
+                            switch phase {
+                            case .empty:
+                                Color.gray.opacity(0.1)
+
+                            case .success(let image):
+                                image
+                                    .resizable()
+                                    .scaledToFill()
+                                    .frame(width: UIScreen.main.bounds.width - 32, height: 220)
+                                    .clipped()
+
+                            case .failure:
+                                Color.gray.opacity(0.1)
+
+                            @unknown default:
+                                Color.gray.opacity(0.1)
+                            }
                         }
+                        .frame(width: UIScreen.main.bounds.width - 32, height: 220)
+                        .clipped()
+                        .cornerRadius(12)
                     }
-                    .frame(height: 220)
-                    .clipped()
-                    .cornerRadius(12)
                 }
-                
-                // Title
+
                 Text(article.title)
                     .font(.title2)
                     .bold()
                     .multilineTextAlignment(.leading)
-                
-                // Date
+
                 if let publishedAt = article.publishedAt {
                     Text(articleDateFormatter.string(from: publishedAt))
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
-                
-                // Source
+
                 if let source = article.source {
                     Text(source)
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
-                
-                // Tags
+
                 if !article.tags.isEmpty {
                     HStack(spacing: 6) {
                         ForEach(article.tags, id: \.self) { tag in
@@ -209,10 +283,9 @@ struct ArticleDetailView: View {
                         }
                     }
                 }
-                
+
                 Divider()
-                
-                // Show summary if reader is disabled OR reader has not loaded/failed
+
                 if !enableInLineView || readerLoader.readerHTML == nil {
                     if let text = bodyText(for: article) {
                         Text(text)
@@ -223,15 +296,14 @@ struct ArticleDetailView: View {
                             .foregroundColor(.secondary)
                     }
                 }
-                
-                // Link actions + optional reader content
+
                 if let url = article.url {
                     Divider()
-                    
+
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Read full article")
                             .font(.headline)
-                        
+
                         HStack(spacing: 12) {
                             Button {
                                 showSafari = true
@@ -239,7 +311,7 @@ struct ArticleDetailView: View {
                                 Label("Open in reader", systemImage: "doc.text.magnifyingglass")
                                     .font(.subheadline)
                             }
-                            
+
                             Button {
                                 openURL(url)
                             } label: {
@@ -249,14 +321,18 @@ struct ArticleDetailView: View {
                         }
                         .tint(Color.blue)
                     }
-                    
-                    // Inline reader – only when enabled in settings
+
                     if enableInLineView {
                         if let html = readerLoader.readerHTML {
                             ReaderHTMLView(
                                 html: html,
                                 height: $readerHeight,
-                                controller: readerController
+                                controller: readerController,
+                                onImageFound: { url in
+                                    if article.imageURL == nil {
+                                        article.readerImageURL = url
+                                    }
+                                }
                             )
                             .frame(height: readerHeight)
                         } else if readerLoader.isLoading {
@@ -269,7 +345,7 @@ struct ArticleDetailView: View {
                             if let baseURL = article.url {
                                 let resolved = unwrapGoogleNewsRedirect(baseURL) ?? baseURL
                                 if isGoogleNewsHost(resolved.host) {
-                                    Text("Inline reader isn’t available for this Google News redirect. Use ‘Open in reader’ instead.")
+                                    Text("Inline reader isn't available for this Google News redirect. Use 'Open in reader' instead.")
                                         .font(.footnote)
                                         .foregroundColor(.secondary)
                                 }
@@ -287,6 +363,7 @@ struct ArticleDetailView: View {
                 Button {
                     onToggleSaved()
                     isSaved.toggle()
+                    article.isSaved = isSaved
                 } label: {
                     Image(systemName: isSaved ? "bookmark.fill" : "bookmark")
                 }
@@ -316,17 +393,18 @@ struct ArticleDetailView: View {
                 print("Inline reader loading:", resolved.absoluteString)
                 await readerLoader.load(from: resolved)
             }
-            // Precompute share body once
-            cachedShareBody = bodyText(for: article) ?? ""
+
+            //cachedShareBody = bodyText(for: article) ?? ""
+            cachedShareBody = exportBodyText(for: article)
         }
     }
-    
-    // MARK: - WKWebView-based exports (unchanged)
+
+    // MARK: - WKWebView-based exports
 
     private func withTemporaryLightMode(on webView: WKWebView, completion: @escaping () -> Void) {
         let oldStyle = webView.overrideUserInterfaceStyle
         webView.overrideUserInterfaceStyle = .light
-        
+
         let injectCSS = """
         (function() {
             var existing = document.getElementById('simpleNews-light-export-style');
@@ -352,14 +430,14 @@ struct ArticleDetailView: View {
             document.head.appendChild(style);
         })();
         """
-        
+
         webView.evaluateJavaScript(injectCSS) { _, error in
             if let error {
                 print("withTemporaryLightMode: failed to inject CSS:", error)
             }
-            
+
             completion()
-            
+
             let removeCSS = """
             (function() {
                 var style = document.getElementById('simpleNews-light-export-style');
@@ -374,7 +452,7 @@ struct ArticleDetailView: View {
             }
         }
     }
-    
+
     private func exportAsPDF() {
         guard
             enableInLineView,
@@ -384,7 +462,7 @@ struct ArticleDetailView: View {
             print("exportAsPDF: reader not ready")
             return
         }
-        
+
         let injectTitle = """
         (function() {
             var titleDiv = document.createElement('div');
@@ -395,17 +473,17 @@ struct ArticleDetailView: View {
             document.body.insertBefore(titleDiv, document.body.firstChild);
         })();
         """
-        
+
         let contentSize = webView.scrollView.contentSize
         let pdfConfig = WKPDFConfiguration()
         pdfConfig.rect = CGRect(origin: .zero, size: contentSize)
-        
+
         withTemporaryLightMode(on: webView) {
             webView.evaluateJavaScript(injectTitle) { _, error in
                 if let error {
                     print("exportAsPDF: failed to inject title:", error)
                 }
-                
+
                 webView.createPDF(configuration: pdfConfig) { result in
                     switch result {
                     case .success(let data):
@@ -433,24 +511,24 @@ struct ArticleDetailView: View {
         let trimmed = json.trimmingCharacters(in: CharacterSet(charactersIn: "[]"))
         return trimmed
     }
-    
+
     private func exportAsImage() {
         let rawText: String
         if let html = readerLoader.readerHTML {
             rawText = plainText(from: html)
         } else {
-            rawText = bodyText(for: article) ?? ""
+            rawText = exportBodyText(for: article)
         }
-        
+
         let body = clippedText(from: rawText, maxCharacters: 5000)
         let targetSize = CGSize(width: 1080, height: 1350)
-        
+
         let image = UIImage.imageForText(
             title: article.title,
             body: body,
             targetSize: targetSize
         )
-        
+
         presentShareSheet(for: [image])
     }
 }
@@ -463,20 +541,20 @@ extension UIImage {
         minFont: CGFloat = 10,
         maxFont: CGFloat = 32
     ) -> UIImage {
-        
+
         let inset: CGFloat = 24
-        
+
         let titleFont = UIFont.boldSystemFont(ofSize: 50)
         let titleParagraph = NSMutableParagraphStyle()
         titleParagraph.alignment = .left
         titleParagraph.lineBreakMode = .byWordWrapping
-        
+
         let titleAttrs: [NSAttributedString.Key: Any] = [
             .font: titleFont,
             .paragraphStyle: titleParagraph,
             .foregroundColor: UIColor.black
         ]
-        
+
         let titleRect = CGRect(
             x: inset,
             y: inset,
@@ -489,20 +567,20 @@ extension UIImage {
             attributes: titleAttrs,
             context: nil
         )
-        
+
         let titleHeight = titleBounding.height
         let spacing: CGFloat = 16
-        
+
         let bodyMaxHeight = targetSize.height - inset - titleHeight - spacing - inset
-        
+
         let bodyParagraph = NSMutableParagraphStyle()
         bodyParagraph.alignment = .left
         bodyParagraph.lineBreakMode = .byWordWrapping
-        
+
         var low = minFont
         var high = maxFont
         var bestFont = minFont
-        
+
         while high - low > 0.5 {
             let mid = (low + high) / 2
             let attrs: [NSAttributedString.Key: Any] = [
@@ -515,7 +593,7 @@ extension UIImage {
                 attributes: attrs,
                 context: nil
             )
-            
+
             if bounding.height <= bodyMaxHeight {
                 bestFont = mid
                 low = mid
@@ -523,25 +601,25 @@ extension UIImage {
                 high = mid
             }
         }
-        
+
         let bodyAttrs: [NSAttributedString.Key: Any] = [
             .font: UIFont.systemFont(ofSize: bestFont),
             .paragraphStyle: bodyParagraph,
             .foregroundColor: UIColor.black
         ]
-        
+
         let renderer = UIGraphicsImageRenderer(size: targetSize)
         return renderer.image { _ in
             UIColor.white.setFill()
             UIBezierPath(rect: CGRect(origin: .zero, size: targetSize)).fill()
-            
+
             (title as NSString).draw(
                 with: titleRect,
                 options: [.usesLineFragmentOrigin],
                 attributes: titleAttrs,
                 context: nil
             )
-            
+
             let bodyY = inset + titleHeight + spacing
             let bodyRect = CGRect(
                 x: inset,
@@ -549,7 +627,7 @@ extension UIImage {
                 width: targetSize.width - inset * 2,
                 height: bodyMaxHeight
             )
-            
+
             (body as NSString).draw(
                 with: bodyRect,
                 options: [.usesLineFragmentOrigin],

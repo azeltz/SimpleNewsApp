@@ -280,8 +280,9 @@ struct NewsSourcesSettingsView: View {
     private func applyChanges() {
         settingsStore.settings = draftSettings
         settingsStore.settings.save()
-        // Optional: refresh on leave
-        Task { await viewModel.refreshIfAllowed(ignoreCooldown: true) }
+//        Task { @MainActor in
+//            await viewModel.refreshIfAllowed(ignoreCooldown: true)
+//        }
     }
 
     private func loadBackendFeeds() async {

@@ -1,8 +1,8 @@
 //
-// NewsViewModel.swift
-// SimpleNews
+//  NewsViewModel.swift
+//  SimpleNews
 //
-// Created by Amir Zeltzer on 2/13/26.
+//  Created by Amir Zeltzer on 2/13/26.
 //
 
 import Foundation
@@ -13,6 +13,7 @@ final class NewsViewModel: ObservableObject {
     @Published var articles: [Article] = []
     @Published var isLoading: Bool = false
     @Published var errorMessage: String? = nil
+
     @Published var tagWeights: [String: Double] = TagWeightsStorage.load()
     @Published var settings: AppSettings = AppSettings.load()
 
@@ -23,7 +24,7 @@ final class NewsViewModel: ObservableObject {
 
     /// Last time the Worker snapshot was taken (meta:last_snapshot_at).
     @Published var lastSnapshotAt: Date? = nil
-
+    
     var filteredArticles: [Article] {
         guard !searchText.isEmpty else { return articles }
         let query = searchText.lowercased()
@@ -34,11 +35,9 @@ final class NewsViewModel: ObservableObject {
             if searchInTitle {
                 matches = matches || article.title.lowercased().contains(query)
             }
-
             if searchInDescription, let desc = article.description?.lowercased() {
                 matches = matches || desc.contains(query)
             }
-
             if searchInTags {
                 let tags = article.tags.joined(separator: " ").lowercased()
                 matches = matches || tags.contains(query)
@@ -47,8 +46,68 @@ final class NewsViewModel: ObservableObject {
             return matches
         }
     }
+    
+    private func startBackgroundTagging(for initialArticles: [Article]) {
+        Task { [weak self] in
+            guard let self else { return }
 
-    // Persistent saved articles (independent of current feed)
+            var updated = initialArticles
+
+            for index in updated.indices {
+                let article = updated[index]
+                let tags = await NewsTaggerService.shared.tags(for: article)
+
+                var newArticle = article
+                newArticle.aiTags = tags
+                updated[index] = newArticle
+
+                if index < self.articles.count,
+                   self.articles[index].id == newArticle.id {
+                    self.articles[index] = newArticle
+                } else if let current = self.articles.firstIndex(where: { $0.id == newArticle.id }) {
+                    self.articles[current] = newArticle
+                }
+            }
+
+            // After all tags are in, re‑score using aiTags + preferred sources.
+            let currentSettings = self.settings
+            let currentTagWeights = self.tagWeights
+            let preferred = Set(currentSettings.preferredSources.map { $0.lowercased() })
+
+            let rescored = updated
+                .map { article -> (Article, Double) in
+                    // Prefer explicit category; fall back to first aiTag
+                    let baseTag: String? = {
+                        if let c = article.category, !c.isEmpty { return c }
+                        return article.aiTags.first
+                    }()
+
+                    var score = 0.0
+                    if let tag = baseTag?.lowercased() {
+                        score += currentTagWeights[tag, default: 0]
+                    }
+                    if let host = article.url?.host?.lowercased(),
+                       preferred.contains(host) {
+                        score += 2.0
+                    }
+                    return (article, score)
+                }
+                .sorted { lhs, rhs in
+                    let (a, aScore) = lhs
+                    let (b, bScore) = rhs
+                    let aDate = a.publishedAt ?? .distantPast
+                    let bDate = b.publishedAt ?? .distantPast
+
+                    if aDate != bDate { return aDate > bDate }
+                    return aScore > bScore
+                }
+                .map { $0.0 }
+
+            self.articles = rescored
+        }
+    }
+
+    // Persistent saved articles independent of current feed
     @Published private(set) var savedArticles: [SavedArticle] = {
         let loaded = SavedArticlesStorage.load()
         return loaded.sorted {
@@ -82,7 +141,7 @@ final class NewsViewModel: ObservableObject {
         savedArticles.sort { a, b in
             switch (a.publishedAt, b.publishedAt) {
             case let (da?, db?):
-                return da > db // newer first
+                return da > db  // newer first
             case (nil, nil):
                 return a.title < b.title
             case (nil, _?):
@@ -97,6 +156,13 @@ final class NewsViewModel: ObservableObject {
 
     func loadInitial() async {
         if articles.isEmpty {
+            // 1) Show last cached list immediately (no spinner).
+            let cached = ArticlesCacheStorage.load()
+            if !cached.isEmpty {
+                self.articles = cached
+            }
+
+            // 2) Then refresh in the background.
             await refreshIfAllowed(ignoreCooldown: true)
         }
     }
@@ -119,16 +185,24 @@ final class NewsViewModel: ObservableObject {
         errorMessage = nil
 
         do {
-            let params = QueryBuilder.queryParams(settings: settings, tagWeights: tagWeights)
+            // Capture current settings/tagWeights once
+            let currentSettings = settings
+            let currentTagWeights = tagWeights
 
+            let params = QueryBuilder.queryParams(
+                settings: currentSettings,
+                tagWeights: currentTagWeights
+            )
+
+            // Fetch both feeds in parallel
             async let newsdataArticles = client.fetchArticles(params: params)
             async let rssResult = rssClient.fetchArticles()
 
             let fetchedNewsdata = try await newsdataArticles
             let (fetchedRSS, snapshotDate) = try await rssResult
 
+            // 1) Combine + de‑duplicate
             var combined = fetchedRSS + fetchedNewsdata
-
             var seen = Set<URL>()
             combined = combined.filter { article in
                 guard let url = article.url else { return true }
@@ -140,20 +214,13 @@ final class NewsViewModel: ObservableObject {
                 }
             }
 
-            var taggedCombined: [Article] = []
-            for article in combined {
-                var mutable = article
-                let modelTags = await NewsTaggerService.shared.tags(for: article)
-                mutable.aiTags = modelTags
-                taggedCombined.append(mutable)
-            }
+            // 2) Initial score & sort WITHOUT aiTags (category + preferred sources only)
+            let preferred = Set(currentSettings.preferredSources.map { $0.lowercased() })
 
-            let preferred = Set(settings.preferredSources.map { $0.lowercased() })
-
-            let scored = taggedCombined
+            let scored = combined
                 .map { article -> (Article, Double) in
                     let tag = article.category?.lowercased() ?? ""
-                    var score = tagWeights[tag, default: 0]
+                    var score = currentTagWeights[tag, default: 0]
                     if let host = article.url?.host?.lowercased(),
                        preferred.contains(host) {
                         score += 2.0
@@ -165,28 +232,45 @@ final class NewsViewModel: ObservableObject {
                     let (b, bScore) = rhs
                     let aDate = a.publishedAt ?? .distantPast
                     let bDate = b.publishedAt ?? .distantPast
-
-                    if aDate != bDate {
-                        return aDate > bDate
-                    }
-
+                    if aDate != bDate { return aDate > bDate }
                     return aScore > bScore
                 }
                 .map { $0.0 }
 
+            // 3) Show list immediately
             self.articles = scored
             self.lastFetchDate = Date()
             self.lastSnapshotAt = snapshotDate
+            ArticlesCacheStorage.save(scored)
+
+            // 4) Enrich with aiTags + final re‑score in the background
+            startBackgroundTagging(for: scored)
+
         } catch {
             self.errorMessage = "Failed to load news: \(error.localizedDescription)"
+            self.isLoading = false
         }
-
-        isLoading = false
     }
+
+    
+    // MARK: - Saved helpers
+
+    func updateSavedReaderImageURL(url: URL?, readerImageURL: URL?) {
+        guard let urlString = url?.absoluteString else { return }
+
+        if let index = savedArticles.firstIndex(where: { $0.url?.absoluteString == urlString }) {
+            var updated = savedArticles[index]
+            updated.readerImageURL = readerImageURL
+            savedArticles[index] = updated
+            SavedArticlesStorage.save(savedArticles)
+        }
+    }
+
 
     // MARK: - Saved
 
     func toggleSaved(_ article: Article) {
+        // Update live feed flag
         if let index = articles.firstIndex(of: article) {
             articles[index].isSaved.toggle()
         }
@@ -194,10 +278,22 @@ final class NewsViewModel: ObservableObject {
         guard let url = article.url else { return }
         let urlString = url.absoluteString
 
+        // Check if already saved by URL
         if let existingIndex = savedArticles.firstIndex(where: { $0.url?.absoluteString == urlString }) {
+            // Remove from saved
             savedArticles.remove(at: existingIndex)
         } else {
-            let saved = SavedArticle(from: article)
+            // Add to saved (copy over readerImageURL too)
+            let saved = SavedArticle(
+                id: article.id,
+                title: article.title,
+                description: article.description,
+                imageURL: article.imageURL,
+                source: article.source,
+                publishedAt: article.publishedAt,
+                url: article.url,
+                readerImageURL: article.readerImageURL
+            )
             savedArticles.append(saved)
             sortSavedArticles()
         }

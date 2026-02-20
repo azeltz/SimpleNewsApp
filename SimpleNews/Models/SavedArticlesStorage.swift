@@ -1,8 +1,8 @@
 //
-// SavedArticlesStorage.swift
-// SimpleNews
+//  SavedArticlesStorage.swift
+//  SimpleNews
 //
-// Created by Amir Zeltzer on 2/13/26.
+//  Created by Amir Zeltzer on 2/13/26.
 //
 
 import Foundation

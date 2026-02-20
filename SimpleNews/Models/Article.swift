@@ -7,12 +7,12 @@
 
 import Foundation
 
-struct Article: Identifiable, Equatable {
+struct Article: Identifiable, Equatable, Codable {
     let id: String
     let title: String
     let description: String?
     let content: String?
-    let imageURL: URL?
+    var imageURL: URL?
     let source: String?
     let category: String?
     let publishedAt: Date?
@@ -20,6 +20,9 @@ struct Article: Identifiable, Equatable {
     var isSaved: Bool
     var liked: Bool?
     var aiTags: [String]
+
+    // Fallback image discovered by the reader
+    var readerImageURL: URL?
 }
 
 extension Article {

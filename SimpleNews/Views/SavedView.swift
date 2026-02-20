@@ -112,17 +112,11 @@ struct SavedView: View {
                 }
             }
             .sheet(item: $selectedSaved) { saved in
-                let article = articleFromSaved(saved)
-                NavigationStack {
-                    ArticleDetailView(
-                        article: article,
-                        showImages: settingsStore.settings.showImages,
-                        enableInLineView: settingsStore.settings.enableInLineView,
-                        onToggleSaved: {
-                            viewModel.toggleSaved(article)
-                        }
-                    )
-                }
+                SavedArticleDetailWrapper(
+                    saved: saved,
+                    viewModel: viewModel
+                )
+                .environmentObject(settingsStore)
             }
             .fullScreenCover(item: $safariItem) { item in
                 SafariView(url: item.url)
@@ -147,7 +141,7 @@ struct SavedView: View {
         }
     }
 
-    // Build a lightweight Article from SavedArticle for reuse with ArticleRow / ArticleDetailView
+    // Build an Article from SavedArticle
     private func articleFromSaved(_ saved: SavedArticle) -> Article {
         Article(
             id: saved.id,
@@ -161,7 +155,60 @@ struct SavedView: View {
             url: saved.url,
             isSaved: true,
             liked: nil,
-            aiTags: []
+            aiTags: [],
+            readerImageURL: saved.readerImageURL
         )
+    }
+}
+
+// Wrapper that lets ArticleDetailView edit an Article and then
+// pushes readerImageURL changes back into the SavedArticle list.
+private struct SavedArticleDetailWrapper: View {
+    @EnvironmentObject var settingsStore: SettingsStore
+    @ObservedObject var viewModel: NewsViewModel
+
+    let saved: SavedArticle
+    @State private var article: Article
+
+    init(
+        saved: SavedArticle,
+        viewModel: NewsViewModel
+    ) {
+        self.saved = saved
+        self.viewModel = viewModel
+        self._article = State(initialValue: Article(
+            id: saved.id,
+            title: saved.title,
+            description: saved.description,
+            content: nil,
+            imageURL: saved.imageURL,
+            source: saved.source,
+            category: nil,
+            publishedAt: saved.publishedAt,
+            url: saved.url,
+            isSaved: true,
+            liked: nil,
+            aiTags: [],
+            readerImageURL: saved.readerImageURL
+        ))
+    }
+
+    var body: some View {
+        NavigationStack {
+            ArticleDetailView(
+                article: $article,
+                showImages: settingsStore.settings.showImages,
+                enableInLineView: settingsStore.settings.enableInLineView,
+                onToggleSaved: {
+                    viewModel.toggleSaved(article)
+                }
+            )
+        }
+        .onChange(of: article.readerImageURL) { oldValue, newValue in
+            viewModel.updateSavedReaderImageURL(
+                url: saved.url,
+                readerImageURL: newValue
+            )
+        }
     }
 }

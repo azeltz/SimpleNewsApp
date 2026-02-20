@@ -1,8 +1,8 @@
 //
-// HomeView.swift
-// SimpleNews
+//  HomeView.swift
+//  SimpleNews
 //
-// Created by Amir Zeltzer on 2/13/26.
+//  Created by Amir Zeltzer on 2/13/26.
 //
 
 import SwiftUI
@@ -17,7 +17,7 @@ struct HomeView: View {
     @ObservedObject var viewModel: NewsViewModel
 
     @State private var expandedArticleIDs: Set<String> = []
-    @State private var selectedArticle: Article? = nil
+    @State private var selectedArticleID: String? = nil
     @State private var safariItem: SafariItem? = nil
 
     var body: some View {
@@ -30,17 +30,26 @@ struct HomeView: View {
                 )
                 .searchPresentationToolbarBehavior(.avoidHidingContent)
                 .toolbar {
-                    // Subtitle under the large title
                     ToolbarItem(placement: .principal) {
-                        if let last = viewModel.lastSnapshotAt {
-                            VStack(alignment: .leading, spacing: 0) {
-                                Spacer(minLength: 0) // keeps layout stable
-                                Text("Updated \(last, style: .time)")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
+                        VStack(alignment: .leading, spacing: 0) {
+                            Spacer(minLength: 0)
+                            HStack(spacing: 6) {
+                                if viewModel.isLoading {
+                                    ProgressView()
+                                        .scaleEffect(0.7)
+                                    Text("Updating…")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                } else if let snapshot = viewModel.lastSnapshotAt {
+                                    Text("Updated \(snapshot, style: .time)")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                } else {
+                                    Text("Updated just now")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
                             }
-                        } else {
-                            EmptyView()
                         }
                     }
 
@@ -59,20 +68,46 @@ struct HomeView: View {
                 }
                 .task { await viewModel.loadInitial() }
                 .refreshable { await viewModel.refreshIfAllowed() }
-                .sheet(item: $selectedArticle) { article in
-                    NavigationStack {
-                        ArticleDetailView(
-                            article: article,
-                            showImages: settingsStore.settings.showImages,
-                            enableInLineView: settingsStore.settings.enableInLineView,
-                            onToggleSaved: { viewModel.toggleSaved(article) }
-                        )
+
+                // Present ArticleDetailView with a Binding<Article>
+                .sheet(
+                    item: Binding(
+                        get: {
+                            // Map selected id -> Article from filtered list
+                            selectedArticleID.flatMap { id in
+                                viewModel.filteredArticles.first(where: { $0.id == id })
+                            }
+                        },
+                        set: { newValue in
+                            selectedArticleID = newValue?.id
+                        }
+                    )
+                ) { article in
+                    // Bind into the backing articles array
+                    if let index = viewModel.articles.firstIndex(where: { $0.id == article.id }) {
+                        NavigationStack {
+                            ArticleDetailView(
+                                article: $viewModel.articles[index],
+                                showImages: settingsStore.settings.showImages,
+                                enableInLineView: settingsStore.settings.enableInLineView,
+                                onToggleSaved: {
+                                    viewModel.toggleSaved(viewModel.articles[index])
+                                }
+                            )
+                        }
                     }
                 }
+
                 .fullScreenCover(item: $safariItem) { item in
                     SafariView(url: item.url)
                         .ignoresSafeArea()
                 }
+        }
+    }
+    
+    private func retryRefresh() {
+        Task { @MainActor in
+                await viewModel.refreshIfAllowed(ignoreCooldown: true)
         }
     }
 
@@ -85,7 +120,7 @@ struct HomeView: View {
                 Text(error)
                     .multilineTextAlignment(.center)
                 Button("Retry") {
-                    Task { await viewModel.refreshIfAllowed(ignoreCooldown: true) }
+                    retryRefresh()
                 }
             }
             .padding()
@@ -98,7 +133,9 @@ struct HomeView: View {
                     isExpanded: expandedArticleIDs.contains(article.id),
                     showTags: settingsStore.settings.enableTags,
                     onToggleSaved: { viewModel.toggleSaved(article) },
-                    onOpenDetail: { selectedArticle = article },
+                    onOpenDetail: {
+                        selectedArticleID = article.id
+                    },
                     onOpenLink: {
                         if let url = article.url {
                             safariItem = SafariItem(url: url)

@@ -19,16 +19,17 @@ struct ArticleRow: View {
     let showImages: Bool
     let showDescription: Bool
     let isExpanded: Bool
-    let showTags: Bool                      // NEW
+    let showTags: Bool
 
     let onToggleSaved: () -> Void
     let onOpenDetail: () -> Void
     let onOpenLink: () -> Void
-    let onToggleExpanded: () -> Void // NEW
+    let onToggleExpanded: () -> Void
 
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
-            if showImages, let url = article.imageURL {
+            // Prefer feed image, fall back to reader-discovered image
+            if showImages, let url = article.imageURL ?? article.readerImageURL {
                 AsyncImage(url: url) { phase in
                     switch phase {
                     case .empty:
@@ -49,24 +50,18 @@ struct ArticleRow: View {
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                // Title: tap opens detail
                 Text(article.title)
                     .font(.subheadline)
                     .fontWeight(.semibold)
                     .lineLimit(3)
-                    .onTapGesture {
-                        onOpenDetail()
-                    }
+                    .onTapGesture { onOpenDetail() }
 
-                // Description: tap toggles expanded/collapsed
                 if showDescription, let description = article.description {
                     Text(description)
                         .font(.footnote)
                         .foregroundColor(.secondary)
                         .lineLimit(isExpanded ? nil : 2)
-                        .onTapGesture {
-                            onToggleExpanded()
-                        }
+                        .onTapGesture { onToggleExpanded() }
                 }
 
                 if let source = article.source {
@@ -81,7 +76,7 @@ struct ArticleRow: View {
                         .foregroundColor(.secondary)
                 }
 
-                if showTags, !article.tags.isEmpty {   // NEW
+                if showTags, !article.tags.isEmpty {
                     HStack(spacing: 4) {
                         ForEach(article.tags, id: \.self) { tag in
                             Text(tag)
@@ -125,7 +120,6 @@ struct ArticleRow: View {
         }
     }
 
-    // Bigger hit area, same small icon
     private func tappableIcon(
         systemName: String,
         tint: Color,
