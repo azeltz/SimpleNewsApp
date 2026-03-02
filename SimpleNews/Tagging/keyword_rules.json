@@ -1,0 +1,634 @@
+{
+  "categories": [
+    {
+      "category": "Sports",
+      "tags": [
+        {
+          "tag": "nba",
+          "status": "y",
+          "keywords": ["nba", "basketball", "mavericks", "lakers", "warriors", "celtics", "knicks", "nets", "bucks", "nuggets", "76ers", "sixers", "suns", "clippers", "grizzlies", "cavaliers", "pacers", "hawks", "raptors", "spurs", "heat", "thunder", "timberwolves", "pelicans", "pistons", "hornets", "wizards", "kings", "blazers", "rockets", "jazz", "magic", "lebron", "steph curry", "luka doncic", "giannis", "jokic", "dunk", "three-pointer", "playoff", "all-star", "nba draft", "free agency", "triple-double", "double-double"]
+        },
+        {
+          "tag": "nfl",
+          "status": "y",
+          "keywords": ["nfl", "super bowl", "quarterback", "cowboys", "patriots", "touchdown", "eagles", "chiefs", "49ers", "ravens", "bills", "dolphins", "steelers", "bengals", "lions", "packers", "bears", "vikings", "saints", "falcons", "chargers", "raiders", "broncos", "jaguars", "titans", "colts", "texans", "seahawks", "rams", "cardinals", "commanders", "panthers", "giants", "jets", "wide receiver", "running back", "tight end", "interception", "fumble", "sack", "field goal", "end zone", "mahomes", "nfl draft", "pro bowl"]
+        },
+        {
+          "tag": "soccer",
+          "status": "y",
+          "keywords": ["soccer", "football club", "premier league", "champions league", "fc barcelona", "real madrid", "manchester united", "manchester city", "liverpool", "arsenal", "chelsea", "tottenham", "bayern munich", "psg", "juventus", "inter milan", "ac milan", "atletico madrid", "borussia dortmund", "napoli", "mls", "la liga", "serie a", "bundesliga", "ligue 1", "eredivisie", "world cup", "euros", "europa league", "transfer window", "penalty kick", "red card", "yellow card", "hat trick", "messi", "ronaldo", "mbappe", "haaland", "fc dallas", "goal scorer", "midfielder", "striker", "goalkeeper"]
+        },
+        {
+          "tag": "tennis",
+          "status": "y",
+          "keywords": ["tennis", "grand slam", "wimbledon", "us open tennis", "australian open", "french open", "roland garros", "atp", "wta", "djokovic", "nadal", "federer", "alcaraz", "sinner", "swiatek", "gauff", "sabalenka", "match point", "break point", "deuce", "tiebreak", "ace"]
+        },
+        {
+          "tag": "baseball",
+          "status": "y",
+          "keywords": ["mlb", "baseball", "world series", "home run", "pitcher", "batting average", "strikeout", "yankees", "dodgers", "red sox", "cubs", "astros", "braves", "mets", "phillies", "padres", "mariners", "orioles", "guardians", "rangers", "twins", "diamondbacks", "brewers", "rays", "royals", "pirates", "reds", "nationals", "rockies", "marlins", "white sox", "tigers", "athletics", "angels", "blue jays", "spring training", "ohtani"]
+        },
+        {
+          "tag": "hockey",
+          "status": "y",
+          "keywords": ["nhl", "hockey", "stanley cup", "hat trick", "power play", "penalty box", "goaltender", "slap shot", "icing", "bruins", "rangers", "maple leafs", "canadiens", "blackhawks", "penguins", "oilers", "lightning", "avalanche", "panthers", "hurricanes", "stars", "kraken", "golden knights", "flames", "canucks", "red wings", "devils", "islanders", "senators", "jets", "predators", "blues", "sharks", "flyers", "wild", "sabres", "blue jackets", "ducks", "capitals", "coyotes"]
+        },
+        {
+          "tag": "college_sports",
+          "status": "y",
+          "keywords": ["ncaa", "college basketball", "college football", "texas a&m", "aggies", "march madness", "final four", "sweet sixteen", "elite eight", "bowl game", "cfp", "college playoff", "sec", "big ten", "big 12", "acc", "pac-12", "heisman", "transfer portal", "nil deal"]
+        },
+        {
+          "tag": "golf",
+          "status": "y",
+          "keywords": ["golf", "pga", "lpga", "masters", "the open", "ryder cup", "birdie", "eagle", "bogey", "hole-in-one", "tiger woods", "scottie scheffler", "rory mcilroy", "liv golf"]
+        },
+        {
+          "tag": "mma",
+          "status": "y",
+          "keywords": ["ufc", "mma", "mixed martial arts", "knockout", "submission", "octagon", "bellator", "pfl", "dana white", "conor mcgregor", "jon jones", "title fight"]
+        },
+        {
+          "tag": "boxing",
+          "status": "y",
+          "keywords": ["boxing", "heavyweight", "welterweight", "middleweight", "lightweight", "title bout", "undercard", "canelo", "tyson fury", "usyk"]
+        },
+        {
+          "tag": "motorsport",
+          "status": "y",
+          "keywords": ["formula 1", "f1", "nascar", "indycar", "grand prix", "pit stop", "pole position", "verstappen", "hamilton", "leclerc", "daytona", "le mans"]
+        },
+        {
+          "tag": "olympics",
+          "status": "y",
+          "keywords": ["olympics", "olympic games", "gold medal", "silver medal", "bronze medal", "paralympics", "olympic team", "olympic record", "world record"]
+        },
+        {
+          "tag": "injury",
+          "status": "y",
+          "keywords": ["torn acl", "achilles", "out for the season", "injured reserve", "concussion protocol", "day-to-day", "hamstring", "knee injury", "shoulder injury", "surgery", "rehab", "sidelined"]
+        },
+        {
+          "tag": "fantasy_sports",
+          "status": "y",
+          "keywords": ["fantasy football", "fantasy basketball", "fantasy baseball", "fantasy hockey", "lineup", "waiver wire", "start sit", "draft picks", "sleeper", "bust", "fantasy score", "perfect lineup", "high score"]
+        },
+        {
+          "tag": "betting",
+          "status": "y",
+          "keywords": ["odds", "spread", "moneyline", "over under", "point spread", "parlay", "sportsbook", "prop bet", "betting line", "picks", "prediction"]
+        }
+      ]
+    },
+    {
+      "category": "Technology",
+      "tags": [
+        {
+          "tag": "ai",
+          "status": "y",
+          "keywords": ["artificial intelligence", "llm", "large language model", "chatgpt", "openai", "anthropic", "claude", "gpt-4", "gpt-5", "gemini", "copilot", "machine learning", "deep learning", "neural network", "generative ai", "text-to-image", "stable diffusion", "midjourney", "dall-e", "transformer model", "fine-tuning", "rag", "prompt engineering", "ai agent", "ai model", "foundation model", "ai safety", "ai alignment", "ai regulation"]
+        },
+        {
+          "tag": "cybersecurity",
+          "status": "y",
+          "keywords": ["data breach", "breach", "hackers", "ransomware", "malware", "phishing", "cyberattack", "security flaw", "zero-day", "vulnerability", "exploit", "firewall", "encryption", "password leak", "ddos", "spyware", "trojan", "botnet", "identity theft", "two-factor", "authentication bypass"]
+        },
+        {
+          "tag": "social_media",
+          "status": "y",
+          "keywords": ["youtube", "tiktok", "instagram", "facebook", "x.com", "twitter", "snapchat", "reels", "shorts", "threads", "bluesky", "mastodon", "reddit", "discord", "twitch", "viral video", "influencer", "content creator", "algorithm", "feed", "stories", "live stream"]
+        },
+        {
+          "tag": "hardware",
+          "status": "y",
+          "keywords": ["semiconductor", "processor", "gpu", "cpu", "iphone", "android phone", "laptop", "macbook", "pixel", "samsung galaxy", "nvidia", "amd", "intel", "qualcomm", "apple silicon", "m4", "snapdragon", "graphics card", "motherboard", "ram", "ssd", "wearable", "smartwatch", "vr headset", "ar glasses", "vision pro"]
+        },
+        {
+          "tag": "software",
+          "status": "y",
+          "keywords": ["ios", "android", "windows", "macos", "linux", "chrome", "safari", "firefox", "app update", "operating system", "software update", "patch", "bug fix", "beta", "open source", "github", "developer", "api", "sdk", "programming"]
+        },
+        {
+          "tag": "startups",
+          "status": "y",
+          "keywords": ["startup", "venture capital", "series a", "series b", "seed round", "funding round", "unicorn", "valuation", "y combinator", "incubator", "accelerator", "pivot", "scale-up"]
+        },
+        {
+          "tag": "big_tech",
+          "status": "y",
+          "keywords": ["apple", "google", "microsoft", "amazon", "meta", "alphabet", "tesla", "spacex", "elon musk", "tim cook", "satya nadella", "sundar pichai", "mark zuckerberg", "jeff bezos", "sam altman"]
+        },
+        {
+          "tag": "telecom",
+          "status": "y",
+          "keywords": ["5g", "6g", "broadband", "fiber optic", "verizon", "at&t", "t-mobile", "spectrum", "satellite internet", "starlink", "cell tower", "network outage"]
+        },
+        {
+          "tag": "robotics",
+          "status": "y",
+          "keywords": ["robot", "robotics", "autonomous", "self-driving", "driverless", "drone", "humanoid robot", "boston dynamics", "automation", "lidar", "waymo", "cruise"]
+        },
+        {
+          "tag": "privacy",
+          "status": "y",
+          "keywords": ["privacy", "surveillance", "data collection", "tracking", "cookies", "gdpr", "ccpa", "facial recognition", "data protection", "end-to-end encryption", "wiretap"]
+        }
+      ]
+    },
+    {
+      "category": "Finance",
+      "tags": [
+        {
+          "tag": "stocks",
+          "status": "y",
+          "keywords": ["stocks", "stock market", "shares", "nasdaq", "dow jones", "s&p 500", "equities", "ipo", "nyse", "wall street", "bull market", "bear market", "market rally", "sell-off", "correction", "trading volume", "index fund", "etf", "blue chip", "penny stock", "stock split", "dividend"]
+        },
+        {
+          "tag": "earnings",
+          "status": "y",
+          "keywords": ["earnings", "quarterly results", "q1 earnings", "q2 earnings", "q3 earnings", "q4 earnings", "revenue", "guidance", "profit", "loss", "earnings per share", "eps", "earnings beat", "earnings miss", "forecast", "outlook", "year-over-year", "operating income", "net income", "gross margin"]
+        },
+        {
+          "tag": "inflation",
+          "status": "y",
+          "keywords": ["inflation", "cpi", "consumer price index", "interest rates", "rate hike", "rate cut", "federal reserve", "fed meeting", "fomc", "monetary policy", "quantitative easing", "bond yields", "treasury", "basis points", "jerome powell", "central bank", "ecb", "bank of england"]
+        },
+        {
+          "tag": "crypto",
+          "status": "y",
+          "keywords": ["bitcoin", "ethereum", "crypto", "cryptocurrency", "blockchain", "token", "nft", "defi", "exchange", "coinbase", "binance", "altcoin", "stablecoin", "usdt", "solana", "dogecoin", "mining", "wallet", "web3", "smart contract", "dao", "airdrop", "crypto etf"]
+        },
+        {
+          "tag": "banking",
+          "status": "y",
+          "keywords": ["bank", "banking", "mortgage", "loan", "credit", "deposit", "savings account", "checking account", "fdic", "bank failure", "jpmorgan", "goldman sachs", "citigroup", "bank of america", "wells fargo", "fintech", "neobank"]
+        },
+        {
+          "tag": "real_estate",
+          "status": "y",
+          "keywords": ["real estate", "housing market", "home prices", "mortgage rate", "rent", "rental", "property", "foreclosure", "housing crisis", "home sales", "commercial real estate", "condo", "apartment", "listing", "zillow", "redfin"]
+        },
+        {
+          "tag": "commodities",
+          "status": "y",
+          "keywords": ["oil price", "crude oil", "brent", "wti", "natural gas", "gold price", "silver", "copper", "wheat", "corn", "opec", "commodity", "futures"]
+        }
+      ]
+    },
+    {
+      "category": "Politics",
+      "tags": [
+        {
+          "tag": "elections",
+          "status": "y",
+          "keywords": ["election", "elections", "vote", "voting", "ballot", "primary", "runoff", "campaign", "candidate", "poll", "polling", "swing state", "battleground", "electoral college", "voter turnout", "midterm", "gubernatorial", "recount", "early voting", "absentee ballot"]
+        },
+        {
+          "tag": "congress",
+          "status": "y",
+          "keywords": ["congress", "senate", "house of representatives", "lawmakers", "bipartisan bill", "filibuster", "committee hearing", "subcommittee", "speaker of the house", "majority leader", "minority leader", "congressional", "appropriations", "oversight"]
+        },
+        {
+          "tag": "supreme_court",
+          "status": "y",
+          "keywords": ["supreme court", "scotus", "justice", "chief justice", "oral arguments", "amicus brief", "constitutional", "appellate", "circuit court", "federal judge", "judicial nomination"]
+        },
+        {
+          "tag": "policy",
+          "status": "y",
+          "keywords": ["policy", "legislation", "regulation", "executive order", "sanctions", "tariff", "trade war", "immigration policy", "border policy", "tax reform", "tax cut", "government shutdown", "debt ceiling", "infrastructure bill", "defense spending"]
+        },
+        {
+          "tag": "white_house",
+          "status": "y",
+          "keywords": ["white house", "president", "oval office", "state of the union", "press secretary", "cabinet", "vice president", "administration", "presidential", "executive branch"]
+        },
+        {
+          "tag": "diplomacy",
+          "status": "y",
+          "keywords": ["diplomacy", "diplomatic", "ambassador", "embassy", "summit", "g7", "g20", "united nations", "un general assembly", "security council", "nato", "treaty", "bilateral", "multilateral", "foreign minister", "secretary of state"]
+        }
+      ]
+    },
+    {
+      "category": "War & conflict",
+      "tags": [
+        {
+          "tag": "israel_gaza_war",
+          "status": "y",
+          "keywords": ["gaza", "hamas", "idf", "netanyahu", "west bank", "rafah", "ceasefire", "palestinian", "hezbollah", "iron dome", "hostage", "hostages", "kibbutz", "october 7", "tunnel", "airstrike", "ground operation", "humanitarian aid gaza", "unrwa", "jenin", "nablus", "settler", "intifada"]
+        },
+        {
+          "tag": "ukraine_war",
+          "status": "y",
+          "keywords": ["ukraine", "kyiv", "zelensky", "donbas", "russian invasion", "front line", "missile strike", "crimea", "kharkiv", "odesa", "zaporizhzhia", "drone attack", "wagner", "conscription", "ammunition", "artillery", "nato aid", "weapons package", "counteroffensive", "bakhmut", "avdiivka", "kursk"]
+        },
+        {
+          "tag": "terrorism",
+          "status": "y",
+          "keywords": ["terrorist", "terror attack", "suicide bombing", "extremist group", "isis", "al-qaeda", "boko haram", "jihadist", "lone wolf", "radicalization", "counterterrorism", "bomb threat", "car bomb", "insurgent", "militant"]
+        },
+        {
+          "tag": "military",
+          "status": "y",
+          "keywords": ["military", "armed forces", "pentagon", "defense department", "troops", "deployment", "naval", "aircraft carrier", "air force", "marines", "special forces", "military base", "missile defense", "arms deal", "weapons sale", "nuclear weapon"]
+        },
+        {
+          "tag": "geopolitics",
+          "status": "y",
+          "keywords": ["geopolitical", "cold war", "arms race", "proxy war", "sphere of influence", "territorial dispute", "south china sea", "taiwan strait", "korean peninsula", "nuclear talks", "iran deal"]
+        }
+      ]
+    },
+    {
+      "category": "Health",
+      "tags": [
+        {
+          "tag": "covid",
+          "status": "y",
+          "keywords": ["covid", "coronavirus", "pandemic", "omicron", "vaccine", "vaccination", "booster shot", "long covid", "covid variant", "mask mandate", "lockdown", "quarantine"]
+        },
+        {
+          "tag": "mental_health",
+          "status": "y",
+          "keywords": ["mental health", "depression", "anxiety", "burnout", "therapy", "therapist", "psychiatrist", "ptsd", "adhd", "bipolar", "schizophrenia", "suicide prevention", "eating disorder", "wellness", "mindfulness", "meditation", "self-care"]
+        },
+        {
+          "tag": "public_health",
+          "status": "y",
+          "keywords": ["public health", "outbreak", "epidemic", "who", "cdc", "disease control", "bird flu", "avian flu", "measles", "tuberculosis", "malaria", "cholera", "mpox", "health crisis", "hospital", "healthcare system", "health insurance", "medicare", "medicaid"]
+        },
+        {
+          "tag": "medicine",
+          "status": "y",
+          "keywords": ["drug approval", "fda", "clinical trial", "pharmaceutical", "pharma", "prescription", "treatment", "diagnosis", "cancer treatment", "immunotherapy", "gene therapy", "stem cell", "antibiotic", "drug recall", "side effect", "medical device"]
+        },
+        {
+          "tag": "nutrition",
+          "status": "y",
+          "keywords": ["nutrition", "diet", "obesity", "weight loss", "calories", "vitamins", "supplements", "protein", "cholesterol", "blood sugar", "diabetes", "organic food", "plant-based"]
+        }
+      ]
+    },
+    {
+      "category": "Climate",
+      "tags": [
+        {
+          "tag": "climate_change",
+          "status": "y",
+          "keywords": ["climate change", "global warming", "emissions", "carbon", "net zero", "greenhouse gas", "carbon dioxide", "co2", "methane", "paris agreement", "climate summit", "cop28", "cop29", "deforestation", "ice sheet", "sea level", "temperature record", "climate crisis"]
+        },
+        {
+          "tag": "extreme_weather",
+          "status": "y",
+          "keywords": ["heatwave", "wildfire", "flooding", "hurricane", "drought", "storm surge", "tornado", "cyclone", "typhoon", "blizzard", "ice storm", "heat dome", "atmospheric river", "flash flood", "mudslide", "earthquake", "tsunami", "volcanic eruption", "natural disaster", "emergency evacuation"]
+        },
+        {
+          "tag": "renewables",
+          "status": "y",
+          "keywords": ["solar power", "wind farm", "renewable energy", "clean energy", "solar panel", "wind turbine", "hydroelectric", "geothermal", "battery storage", "energy grid", "electric vehicle", "ev", "charging station", "green hydrogen", "nuclear energy", "fusion energy", "carbon capture"]
+        },
+        {
+          "tag": "pollution",
+          "status": "y",
+          "keywords": ["pollution", "air quality", "smog", "toxic waste", "microplastic", "oil spill", "water contamination", "pfas", "forever chemicals", "chemical plant", "environmental damage"]
+        }
+      ]
+    },
+    {
+      "category": "Entertainment",
+      "tags": [
+        {
+          "tag": "movies",
+          "status": "y",
+          "keywords": ["movie", "film", "box office", "trailer", "sequel", "blockbuster", "oscar", "academy award", "golden globe", "director", "screenplay", "casting", "marvel", "disney", "netflix", "warner bros", "sony pictures", "paramount", "cinema", "premiere"]
+        },
+        {
+          "tag": "tv_shows",
+          "status": "y",
+          "keywords": ["tv show", "series", "season finale", "streaming", "hbo", "netflix series", "amazon prime", "hulu", "apple tv", "peacock", "disney plus", "showrunner", "binge", "limited series", "reality tv", "talk show", "late night"]
+        },
+        {
+          "tag": "music",
+          "status": "y",
+          "keywords": ["album", "song", "concert", "tour", "grammy", "billboard", "spotify", "apple music", "vinyl", "music video", "single release", "mixtape", "festival", "coachella", "lollapalooza", "record label"]
+        },
+        {
+          "tag": "celebrity",
+          "status": "y",
+          "keywords": ["celebrity", "red carpet", "paparazzi", "scandal", "engagement", "divorce", "dating", "breakup", "memoir", "interview", "late night", "award show"]
+        },
+        {
+          "tag": "gaming",
+          "status": "y",
+          "keywords": ["video game", "gaming", "playstation", "xbox", "nintendo", "steam", "pc gaming", "esports", "game release", "dlc", "expansion", "fps", "rpg", "battle royale", "fortnite", "minecraft", "call of duty", "zelda", "grand theft auto"]
+        }
+      ]
+    },
+    {
+      "category": "Science",
+      "tags": [
+        {
+          "tag": "space",
+          "status": "y",
+          "keywords": ["nasa", "spacex", "rocket launch", "satellite", "mars", "moon", "asteroid", "comet", "james webb", "telescope", "orbit", "space station", "iss", "astronaut", "cosmonaut", "black hole", "exoplanet", "starship", "blue origin", "artemis"]
+        },
+        {
+          "tag": "biology",
+          "status": "y",
+          "keywords": ["biology", "genetics", "dna", "genome", "crispr", "gene editing", "species", "evolution", "fossil", "paleontology", "dinosaur", "biodiversity", "marine biology", "cell biology"]
+        },
+        {
+          "tag": "physics",
+          "status": "y",
+          "keywords": ["physics", "quantum", "particle", "cern", "hadron collider", "dark matter", "dark energy", "gravitational wave", "superconductor", "fusion", "antimatter"]
+        },
+        {
+          "tag": "research",
+          "status": "y",
+          "keywords": ["study finds", "researchers", "scientists", "peer-reviewed", "journal", "breakthrough", "discovery", "experiment", "hypothesis", "Nobel Prize", "scientific method"]
+        }
+      ]
+    },
+    {
+      "category": "Education",
+      "tags": [
+        {
+          "tag": "higher_ed",
+          "status": "y",
+          "keywords": ["university", "college", "campus", "tuition", "student loan", "scholarship", "professor", "tenure", "admissions", "enrollment", "commencement", "ivy league", "graduate school", "phd", "masters degree"]
+        },
+        {
+          "tag": "k12",
+          "status": "y",
+          "keywords": ["school district", "public school", "charter school", "teacher", "curriculum", "school board", "standardized test", "homework", "classroom", "elementary school", "high school", "middle school", "school shooting"]
+        },
+        {
+          "tag": "edtech",
+          "status": "y",
+          "keywords": ["online learning", "e-learning", "edtech", "coursera", "khan academy", "tutoring", "remote learning", "virtual classroom"]
+        }
+      ]
+    },
+    {
+      "category": "Business",
+      "tags": [
+        {
+          "tag": "mergers",
+          "status": "y",
+          "keywords": ["merger", "acquisition", "buyout", "takeover", "antitrust", "ftc", "doj", "monopoly", "deal", "joint venture", "spin-off", "divestiture"]
+        },
+        {
+          "tag": "layoffs",
+          "status": "y",
+          "keywords": ["layoff", "layoffs", "job cuts", "downsizing", "restructuring", "workforce reduction", "severance", "hiring freeze", "furlough"]
+        },
+        {
+          "tag": "labor",
+          "status": "y",
+          "keywords": ["strike", "union", "labor dispute", "walkout", "collective bargaining", "minimum wage", "workers rights", "picket", "uaw", "teamsters"]
+        },
+        {
+          "tag": "supply_chain",
+          "status": "y",
+          "keywords": ["supply chain", "logistics", "shipping", "freight", "port", "container", "shortage", "backlog", "manufacturing", "warehouse"]
+        },
+        {
+          "tag": "retail",
+          "status": "y",
+          "keywords": ["retail", "e-commerce", "online shopping", "amazon", "walmart", "target", "costco", "black friday", "cyber monday", "sales", "store closure", "brick and mortar"]
+        }
+      ]
+    },
+    {
+      "category": "Travel",
+      "tags": [
+        {
+          "tag": "airlines",
+          "status": "y",
+          "keywords": ["airline", "flight", "airport", "boarding", "turbulence", "delay", "cancellation", "faa", "boeing", "airbus", "delta airlines", "united airlines", "american airlines", "southwest", "first class", "business class"]
+        },
+        {
+          "tag": "destinations",
+          "status": "y",
+          "keywords": ["vacation", "tourist", "tourism", "resort", "cruise", "hotel", "airbnb", "travel advisory", "passport", "visa", "itinerary", "backpacking", "road trip"]
+        }
+      ]
+    },
+    {
+      "category": "Food",
+      "tags": [
+        {
+          "tag": "restaurants",
+          "status": "y",
+          "keywords": ["restaurant", "chef", "michelin star", "fine dining", "fast food", "food truck", "menu", "reservation", "takeout", "delivery"]
+        },
+        {
+          "tag": "food_trends",
+          "status": "y",
+          "keywords": ["recipe", "cooking", "baking", "food trend", "plant-based", "vegan", "gluten-free", "fermented", "sourdough", "meal prep", "food safety", "recall"]
+        }
+      ]
+    },
+    {
+      "category": "Crypto",
+      "tags": [
+        {
+          "tag": "bitcoin",
+          "status": "y",
+          "keywords": ["bitcoin", "btc", "satoshi", "bitcoin etf", "bitcoin halving", "bitcoin mining", "bitcoin price"]
+        },
+        {
+          "tag": "altcoins",
+          "status": "y",
+          "keywords": ["ethereum", "solana", "cardano", "polkadot", "avalanche", "chainlink", "dogecoin", "shiba inu", "ripple", "xrp", "litecoin", "polygon", "matic"]
+        },
+        {
+          "tag": "defi_web3",
+          "status": "y",
+          "keywords": ["defi", "decentralized finance", "web3", "smart contract", "dao", "yield farming", "liquidity pool", "dex", "nft", "metaverse", "virtual land"]
+        }
+      ]
+    },
+    {
+      "category": "Middle East",
+      "tags": [
+        {
+          "tag": "israel",
+          "status": "y",
+          "keywords": ["israel", "tel aviv", "jerusalem", "knesset", "idf", "netanyahu", "israeli", "west bank", "settler", "kibbutz", "mossad", "shin bet"]
+        },
+        {
+          "tag": "iran",
+          "status": "y",
+          "keywords": ["iran", "tehran", "ayatollah", "khamenei", "irgc", "revolutionary guard", "iranian", "nuclear program", "enrichment", "sanctions iran"]
+        },
+        {
+          "tag": "gulf_states",
+          "status": "y",
+          "keywords": ["saudi arabia", "uae", "dubai", "qatar", "bahrain", "kuwait", "oman", "mbs", "crown prince", "oil kingdom", "opec"]
+        },
+        {
+          "tag": "regional",
+          "status": "y",
+          "keywords": ["syria", "iraq", "lebanon", "jordan", "yemen", "houthi", "kurdish", "turkey", "erdogan", "ankara"]
+        }
+      ]
+    },
+    {
+      "category": "US",
+      "tags": [
+        {
+          "tag": "us_politics",
+          "status": "y",
+          "keywords": ["washington dc", "capitol hill", "democrat", "republican", "gop", "dnc", "rnc", "bipartisan", "partisan", "swing state", "red state", "blue state"]
+        },
+        {
+          "tag": "us_economy",
+          "status": "y",
+          "keywords": ["us economy", "jobs report", "unemployment", "consumer spending", "gdp", "recession", "economic growth", "housing market", "cost of living"]
+        },
+        {
+          "tag": "crime_law",
+          "status": "y",
+          "keywords": ["crime", "shooting", "murder", "robbery", "arrest", "indictment", "trial", "verdict", "prison", "sentence", "parole", "fbi", "doj", "prosecution", "grand jury", "plea deal"]
+        },
+        {
+          "tag": "immigration",
+          "status": "y",
+          "keywords": ["immigration", "border", "migrant", "asylum", "deportation", "ice", "border patrol", "refugee", "visa", "green card", "daca", "dreamers", "undocumented"]
+        }
+      ]
+    },
+    {
+      "category": "Europe",
+      "tags": [
+        {
+          "tag": "eu",
+          "status": "y",
+          "keywords": ["european union", "eu", "brussels", "european commission", "european parliament", "eurozone", "euro", "schengen", "eu regulation"]
+        },
+        {
+          "tag": "uk",
+          "status": "y",
+          "keywords": ["united kingdom", "britain", "london", "parliament", "prime minister", "downing street", "nhs", "royal family", "king charles", "prince william"]
+        },
+        {
+          "tag": "europe_regional",
+          "status": "y",
+          "keywords": ["france", "germany", "spain", "italy", "poland", "netherlands", "scandinavia", "nordic", "balkans", "macron", "scholz", "berlin", "paris", "madrid", "rome"]
+        }
+      ]
+    },
+    {
+      "category": "Asia",
+      "tags": [
+        {
+          "tag": "china",
+          "status": "y",
+          "keywords": ["china", "beijing", "xi jinping", "ccp", "communist party", "shanghai", "hong kong", "taiwan", "south china sea", "belt and road", "chinese economy", "yuan"]
+        },
+        {
+          "tag": "japan_korea",
+          "status": "y",
+          "keywords": ["japan", "tokyo", "south korea", "seoul", "north korea", "pyongyang", "kim jong un", "boj", "bank of japan", "yen", "k-pop"]
+        },
+        {
+          "tag": "india",
+          "status": "y",
+          "keywords": ["india", "new delhi", "mumbai", "modi", "bjp", "bollywood", "rupee", "indian economy", "cricket"]
+        },
+        {
+          "tag": "southeast_asia",
+          "status": "y",
+          "keywords": ["asean", "vietnam", "philippines", "indonesia", "thailand", "singapore", "malaysia", "myanmar", "cambodia"]
+        }
+      ]
+    },
+    {
+      "category": "Africa",
+      "tags": [
+        {
+          "tag": "africa_regional",
+          "status": "y",
+          "keywords": ["nigeria", "south africa", "kenya", "ethiopia", "egypt", "cairo", "lagos", "nairobi", "african union", "sahel", "congo", "sudan", "somalia", "mozambique", "ghana", "morocco", "tunisia", "algeria", "libya"]
+        }
+      ]
+    },
+    {
+      "category": "Latin America",
+      "tags": [
+        {
+          "tag": "latam_regional",
+          "status": "y",
+          "keywords": ["brazil", "mexico", "argentina", "colombia", "chile", "peru", "venezuela", "cuba", "ecuador", "bolivia", "caribbean", "sao paulo", "buenos aires", "mexico city", "bogota", "lula", "milei", "drug cartel"]
+        }
+      ]
+    },
+    {
+      "category": "World",
+      "tags": [
+        {
+          "tag": "global_affairs",
+          "status": "y",
+          "keywords": ["united nations", "world leaders", "global summit", "international", "multilateral", "humanitarian crisis", "refugee crisis", "genocide", "famine", "world bank", "imf", "international court"]
+        },
+        {
+          "tag": "human_rights",
+          "status": "y",
+          "keywords": ["human rights", "amnesty international", "press freedom", "censorship", "political prisoner", "authoritarianism", "democracy", "civil liberties", "protest", "crackdown"]
+        }
+      ]
+    },
+    {
+      "category": "Fitness",
+      "tags": [
+        {
+          "tag": "exercise",
+          "status": "y",
+          "keywords": ["workout", "exercise", "gym", "strength training", "cardio", "crossfit", "hiit", "running", "marathon", "triathlon", "yoga", "pilates", "weightlifting", "bodybuilding", "personal trainer"]
+        }
+      ]
+    },
+    {
+      "category": "Parenting",
+      "tags": [
+        {
+          "tag": "parenting",
+          "status": "y",
+          "keywords": ["parenting", "motherhood", "fatherhood", "child care", "daycare", "newborn", "toddler", "baby", "pregnancy", "prenatal", "breastfeeding", "screen time", "child development"]
+        }
+      ]
+    },
+    {
+      "category": "Pets",
+      "tags": [
+        {
+          "tag": "pets",
+          "status": "y",
+          "keywords": ["dog", "cat", "puppy", "kitten", "pet adoption", "veterinarian", "animal shelter", "pet food", "pet health", "breed"]
+        }
+      ]
+    },
+    {
+      "category": "Relationships",
+      "tags": [
+        {
+          "tag": "relationships",
+          "status": "y",
+          "keywords": ["relationship", "marriage", "wedding", "divorce", "dating app", "tinder", "bumble", "hinge", "couples therapy", "love", "break up"]
+        }
+      ]
+    },
+    {
+      "category": "Real estate",
+      "tags": [
+        {
+          "tag": "housing",
+          "status": "y",
+          "keywords": ["housing", "real estate", "home prices", "mortgage", "rent", "apartment", "condo", "foreclosure", "housing market", "home sales", "interest rate mortgage", "property tax", "zoning", "landlord", "tenant"]
+        }
+      ]
+    }
+  ]
+}
