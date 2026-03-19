@@ -22,10 +22,16 @@ final class UserSourcesStore: ObservableObject {
     init() {
         if let data = UserDefaults.standard.data(forKey: Self.storageKey),
            let saved = try? JSONDecoder().decode(SavedSources.self, from: data) {
+            // Restore saved preferences (respecting the user's enabled/disabled choices)
             self.defaults = saved.defaults
             self.custom = saved.custom
         } else {
-            self.defaults = FeedSource.defaults
+            // First install: all default sources enabled
+            self.defaults = FeedSource.defaultSources.map { src in
+                var s = src
+                s.isEnabled = true
+                return s
+            }
             self.custom = []
         }
     }
@@ -37,7 +43,7 @@ final class UserSourcesStore: ObservableObject {
         let custom: [FeedSource]
     }
 
-    private func persist() {
+    func persist() {
         let payload = SavedSources(defaults: defaults, custom: custom)
         if let data = try? JSONEncoder().encode(payload) {
             UserDefaults.standard.set(data, forKey: Self.storageKey)
@@ -58,8 +64,12 @@ final class UserSourcesStore: ObservableObject {
 
     func addCustomSource(id: String, url: URL, source: String, kind: String) {
         let feed = FeedSource(
-            id: id, url: url, source: source, kind: kind,
-            isDefault: false, isEnabled: true
+            id: id,
+            url: url,
+            source: source,
+            kind: kind,
+            isDefault: false,
+            isEnabled: true
         )
         custom.append(feed)
         persist()
@@ -75,32 +85,25 @@ final class UserSourcesStore: ObservableObject {
     // MARK: - Networking
 
     func syncFeedsToServer() async {
-        let feeds = activeSources
-        let userId = UserIdManager.current
-        guard var components = URLComponents(string: "https://rss-aggregator.simplenews.workers.dev/feeds") else { return }
-        components.queryItems = [URLQueryItem(name: "userId", value: userId)]
-        guard let url = components.url else { return }
+        let enabledIds = activeSources.map { ["id": $0.id] }
+        let payload: [String: Any] = ["feeds": enabledIds]
 
+        let url = simpleNewsBackendBaseURL.appendingPathComponent("feeds")
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(UserIdManager.current, forHTTPHeaderField: "X-SimpleNews-UserId")
 
-        struct FeedPayload: Codable {
-            let id: String
-            let url: String
-            let source: String
-            let kind: String
+        guard let body = try? JSONSerialization.data(withJSONObject: payload) else { return }
+        request.httpBody = body
+
+        do {
+            let (_, response) = try await URLSession.shared.data(for: request)
+            if let http = response as? HTTPURLResponse, !(200...299).contains(http.statusCode) {
+                Log.network.error("UserSourcesStore: sync failed with status \(http.statusCode)")
+            }
+        } catch {
+            Log.network.error("UserSourcesStore: sync failed: \(error.localizedDescription)")
         }
-        struct Body: Codable {
-            let feeds: [FeedPayload]
-        }
-
-        let payload = Body(feeds: feeds.map {
-            FeedPayload(id: $0.id, url: $0.url.absoluteString, source: $0.source, kind: $0.kind)
-        })
-
-        request.httpBody = try? JSONEncoder().encode(payload)
-
-        _ = try? await URLSession.shared.data(for: request)
     }
 }

@@ -43,7 +43,11 @@ final class NotificationManager: ObservableObject {
 
     private static let dailyDigestIdentifier = "com.simplenews.dailyDigest"
 
-    func scheduleDailyDigest(hour: Int, minute: Int) {
+    /// Cached 25-word summary for use in digest notification body when
+    /// background refresh is on. Updated by the background task handler.
+    @Published var cachedShortSummary: String?
+
+    func scheduleDailyDigest(hour: Int, minute: Int, backgroundRefreshOn: Bool) {
         // Remove any existing daily digest notification
         center.removePendingNotificationRequests(withIdentifiers: [Self.dailyDigestIdentifier])
 
@@ -54,9 +58,18 @@ final class NotificationManager: ObservableObject {
         let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: true)
 
         let content = UNMutableNotificationContent()
-        content.title = "Your Daily News Digest"
-        content.body = "Tap to see today's top stories and AI summary."
+        content.title = "Your SimpleNews Daily Digest"
+
+        if backgroundRefreshOn, let summary = cachedShortSummary, !summary.isEmpty {
+            // Use the pre-generated 25-word summary
+            content.body = summary
+        } else {
+            // Generic CTA when background refresh is off or no cached summary
+            content.body = "Tap to see today's AI-powered daily digest."
+        }
+
         content.sound = .default
+        content.userInfo = ["type": "dailyDigest"]
 
         let request = UNNotificationRequest(
             identifier: Self.dailyDigestIdentifier,
@@ -66,7 +79,7 @@ final class NotificationManager: ObservableObject {
 
         center.add(request) { error in
             if let error {
-                print("Failed to schedule daily digest: \(error.localizedDescription)")
+                Log.notify.error("Failed to schedule daily digest: \(error.localizedDescription)")
             }
         }
     }
@@ -78,21 +91,37 @@ final class NotificationManager: ObservableObject {
     // MARK: - Breaking News Alerts
 
     /// Posts a local notification for a breaking article from a tracked source.
-    func postBreakingAlert(title: String, source: String) {
+    /// Pass the Article.id so the app can deep-link into that article when the
+    /// user taps the notification.
+    func postBreakingAlert(for article: Article) {
         let content = UNMutableNotificationContent()
-        content.title = "Breaking: \(source)"
-        content.body = title
+
+        let source = article.source ?? "SimpleNews"
+        content.title = "Breaking: \(article.title)"
+
+        if let description = article.description, !description.isEmpty {
+            content.body = "\(description) - \(source)"
+        } else {
+            content.body = source
+        }
+
         content.sound = .default
 
+        // Include routing info so the app can deep-link on tap
+        content.userInfo = [
+            "type": "breaking",
+            "articleID": article.id
+        ]
+
         let request = UNNotificationRequest(
-            identifier: "breaking-\(UUID().uuidString)",
+            identifier: "breaking-\(article.id)",
             content: content,
             trigger: nil // deliver immediately
         )
 
         center.add(request) { error in
             if let error {
-                print("Failed to post breaking alert: \(error.localizedDescription)")
+                Log.notify.error("Failed to post breaking alert: \(error.localizedDescription)")
             }
         }
     }
@@ -102,9 +131,38 @@ final class NotificationManager: ObservableObject {
     /// Call this when notification settings change to update scheduled notifications.
     func syncWithSettings(_ settings: AppSettings) {
         if settings.enableDailyDigest && isAuthorized {
-            scheduleDailyDigest(hour: settings.dailyDigestHour, minute: settings.dailyDigestMinute)
+            scheduleDailyDigest(
+                hour: settings.dailyDigestHour,
+                minute: settings.dailyDigestMinute,
+                backgroundRefreshOn: settings.enableBackgroundRefresh
+            )
         } else {
             cancelDailyDigest()
+        }
+    }
+    
+    // MARK: - Debug / Testing
+
+    func scheduleTestNotification() {
+        let content = UNMutableNotificationContent()
+        content.title = "SimpleNews test"
+        content.body = "If you see this, notifications are working."
+        content.sound = .default
+
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
+
+        let request = UNNotificationRequest(
+            identifier: "com.simplenews.testNotification",
+            content: content,
+            trigger: trigger
+        )
+
+        center.add(request) { error in
+            if let error {
+                Log.notify.error("Failed to schedule test notification: \(error.localizedDescription)")
+            } else {
+                Log.notify.debug("Test notification scheduled")
+            }
         }
     }
 }

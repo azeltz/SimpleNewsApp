@@ -12,7 +12,7 @@ import CoreML
 final class NewsTaggerService {
     static let shared = NewsTaggerService()
 
-    private let model: NewsTagger
+    private let model: NewsTagger?
     private let tags: [String]
     private let vocabulary: [String: Int]
     private let idf: [Double]
@@ -20,10 +20,20 @@ final class NewsTaggerService {
 
     init() {
         let config = MLModelConfiguration()
-        self.model = try! NewsTagger(configuration: config)
+        do {
+            self.model = try NewsTagger(configuration: config)
+        } catch {
+            Log.tagging.error("NewsTaggerService: failed to load model: \(error)")
+            self.model = nil
+            self.tags = []
+            self.vocabulary = [:]
+            self.idf = []
+            self.featureCount = 0
+            return
+        }
 
         // Load tag names from model metadata (creatorDefined["tags"])
-        if let creatorDefined = model.model.modelDescription.metadata[.creatorDefinedKey] as? [String: String],
+        if let creatorDefined = model?.model.modelDescription.metadata[.creatorDefinedKey] as? [String: String],
            let tagsString = creatorDefined["tags"] {
             self.tags = tagsString
                 .split(separator: ",")
@@ -33,21 +43,40 @@ final class NewsTaggerService {
         }
 
         // Load TF-IDF metadata from bundled JSON
-        let vocabURL = Bundle.main.url(forResource: "news_tfidf_vocab", withExtension: "json")!
-        let data = try! Data(contentsOf: vocabURL)
-        let vocabPayload = try! JSONSerialization.jsonObject(with: data, options: []) as! [String: Any]
+        guard let vocabURL = Bundle.main.url(forResource: "news_tfidf_vocab", withExtension: "json") else {
+            Log.tagging.error("NewsTaggerService: news_tfidf_vocab.json not found in bundle")
+            self.vocabulary = [:]
+            self.idf = []
+            self.featureCount = 0
+            return
+        }
 
-        self.vocabulary = vocabPayload["vocabulary"] as? [String: Int] ?? [:]
-        self.idf = (vocabPayload["idf"] as? [Double]) ?? []
+        do {
+            let data = try Data(contentsOf: vocabURL)
+            guard let vocabPayload = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] else {
+                Log.tagging.error("NewsTaggerService: vocab JSON is not a dictionary")
+                self.vocabulary = [:]
+                self.idf = []
+                self.featureCount = 0
+                return
+            }
+            self.vocabulary = vocabPayload["vocabulary"] as? [String: Int] ?? [:]
+            self.idf = (vocabPayload["idf"] as? [Double]) ?? []
+        } catch {
+            Log.tagging.error("NewsTaggerService: failed to load vocab: \(error)")
+            self.vocabulary = [:]
+            self.idf = []
+            self.featureCount = 0
+            return
+        }
 
-        // Use the actual dimension from training: max index + 1, aligned with idf length
-        // let maxIndex = vocabulary.values.max() ?? -1
         self.featureCount = idf.count
-        //print("NewsTaggerService init: featureCount =", featureCount, "tags =", tags.count)
     }
 
     /// Public async API: get tags for an article.
     func tags(for article: Article) async -> [String] {
+        guard model != nil else { return [] }
+
         let text = buildInputText(for: article)
         guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             return []
@@ -56,7 +85,7 @@ final class NewsTaggerService {
         do {
             return try predictFromTFIDF(text: text)
         } catch {
-            print("NewsTaggerService error:", error)
+            Log.tagging.error("NewsTaggerService error: \(error)")
             return []
         }
     }
@@ -120,11 +149,12 @@ final class NewsTaggerService {
         //print("NewsTaggerService: non-zero TF-IDF features =", nonZeroCount)
 
         // 4) Run Core ML model (linear logits)
+        guard let model else { return [] }
         let input = NewsTaggerInput(features: featuresArray)
         let output = try model.prediction(input: input)
 
         guard let logitsArray = output.featureValue(for: "logits")?.multiArrayValue else {
-            print("NewsTaggerService: missing logits output")
+            Log.tagging.error("NewsTaggerService: missing logits output")
             return []
         }
 
@@ -144,8 +174,8 @@ final class NewsTaggerService {
         //print("NewsTaggerService: top tags =", sortedAll.prefix(5))
 
         // 5) Threshold and sort
-        let threshold = 0.2
-        let maxTags = 5
+        let threshold = 0.15
+        let maxTags = 6
         let selected = tagProbs
             .sorted { $0.1 > $1.1 }
             .prefix(maxTags)

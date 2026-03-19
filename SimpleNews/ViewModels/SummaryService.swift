@@ -54,7 +54,7 @@ enum SummaryService {
             let text = response.content.trimmingCharacters(in: .whitespacesAndNewlines)
             return text.isEmpty ? nil : text
         } catch {
-            print("Foundation Models error: \(error)")
+            Log.general.error("Foundation Models error: \(error)")
             return nil
         }
     }
@@ -78,7 +78,7 @@ enum SummaryService {
 
         return """
         You are a concise news editor. Below are today's top headlines for \(dateStr). \
-        Write a roughly 500-word summary in flowing prose that covers the most important \
+        Write a roughly 200-word summary in flowing prose that covers the most important \
         and most repeated topics. Combine related stories naturally. Do NOT use bullet points \
         or numbered lists. Write in third person, present tense, like a newspaper briefing. \
         Do not include any headline listing at the end.

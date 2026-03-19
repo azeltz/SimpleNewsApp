@@ -11,11 +11,15 @@ private let settingsKey = "appSettings"
 
 extension AppSettings {
     static func load() -> AppSettings {
-        if let data = UserDefaults.standard.data(forKey: settingsKey),
-           let decoded = try? JSONDecoder().decode(AppSettings.self, from: data) {
-            return decoded
+        guard let data = UserDefaults.standard.data(forKey: settingsKey) else {
+            return AppSettings()
         }
-        return AppSettings()
+        do {
+            return try JSONDecoder().decode(AppSettings.self, from: data)
+        } catch {
+            Log.data.error("SettingsStorage: decode failed – \(error)")
+            return AppSettings()
+        }
     }
 
     func save() {

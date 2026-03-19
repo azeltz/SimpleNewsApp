@@ -4,24 +4,24 @@
       "category": "Sports",
       "tags": [
         {
-          "tag": "nba",
+          "tag": "basketball",
           "status": "y",
-          "keywords": ["nba", "basketball", "mavericks", "lakers", "warriors", "celtics", "knicks", "nets", "bucks", "nuggets", "76ers", "sixers", "suns", "clippers", "grizzlies", "cavaliers", "pacers", "hawks", "raptors", "spurs", "heat", "thunder", "timberwolves", "pelicans", "pistons", "hornets", "wizards", "kings", "blazers", "rockets", "jazz", "magic", "lebron", "steph curry", "luka doncic", "giannis", "jokic", "dunk", "three-pointer", "playoff", "all-star", "nba draft", "free agency", "triple-double", "double-double"]
+          "keywords": ["nba", "wnba", "basketball", "euroleague", "fiba", "mavericks", "lakers", "warriors", "celtics", "knicks", "nets", "bucks", "nuggets", "76ers", "sixers", "suns", "clippers", "grizzlies", "cavaliers", "pacers", "hawks", "raptors", "spurs", "heat", "thunder", "timberwolves", "pelicans", "pistons", "hornets", "wizards", "kings", "blazers", "rockets", "jazz", "magic", "lebron", "steph curry", "luka doncic", "giannis", "jokic", "dunk", "three-pointer", "nba playoff", "nba all-star", "nba draft", "nba free agency", "triple-double", "double-double", "hoops", "eurohoops"]
         },
         {
-          "tag": "nfl",
+          "tag": "football",
           "status": "y",
           "keywords": ["nfl", "super bowl", "quarterback", "cowboys", "patriots", "touchdown", "eagles", "chiefs", "49ers", "ravens", "bills", "dolphins", "steelers", "bengals", "lions", "packers", "bears", "vikings", "saints", "falcons", "chargers", "raiders", "broncos", "jaguars", "titans", "colts", "texans", "seahawks", "rams", "cardinals", "commanders", "panthers", "giants", "jets", "wide receiver", "running back", "tight end", "interception", "fumble", "sack", "field goal", "end zone", "mahomes", "nfl draft", "pro bowl"]
         },
         {
           "tag": "soccer",
           "status": "y",
-          "keywords": ["soccer", "football club", "premier league", "champions league", "fc barcelona", "real madrid", "manchester united", "manchester city", "liverpool", "arsenal", "chelsea", "tottenham", "bayern munich", "psg", "juventus", "inter milan", "ac milan", "atletico madrid", "borussia dortmund", "napoli", "mls", "la liga", "serie a", "bundesliga", "ligue 1", "eredivisie", "world cup", "euros", "europa league", "transfer window", "penalty kick", "red card", "yellow card", "hat trick", "messi", "ronaldo", "mbappe", "haaland", "fc dallas", "goal scorer", "midfielder", "striker", "goalkeeper"]
+          "keywords": ["soccer", "fifa", "uefa", "conmebol", "concecaf", "europa league", "conference league", "football club", "premier league", "champions league", "fc barcelona", "real madrid", "manchester united", "manchester city", "liverpool", "arsenal", "chelsea", "tottenham", "bayern munich", "psg", "juventus", "inter milan", "ac milan", "atletico madrid", "borussia dortmund", "napoli", "mls", "la liga", "serie a", "bundesliga", "ligue 1", "eredivisie", "world cup", "euros", "transfer window", "penalty kick", "red card", "yellow card", "hat trick", "messi", "ronaldo", "mbappe", "haaland", "fc dallas", "goal scorer", "midfielder", "striker", "goalkeeper"]
         },
         {
           "tag": "tennis",
           "status": "y",
-          "keywords": ["tennis", "grand slam", "wimbledon", "us open tennis", "australian open", "french open", "roland garros", "atp", "wta", "djokovic", "nadal", "federer", "alcaraz", "sinner", "swiatek", "gauff", "sabalenka", "match point", "break point", "deuce", "tiebreak", "ace"]
+          "keywords": ["tennis", "grand slam", "wimbledon", "us open tennis", "australian open", "french open", "roland garros", "atp", "wta", "djokovic", "nadal", "federer", "alcaraz", "sinner", "swiatek", "gauff", "sabalenka", "match point", "break point", "deuce", "tiebreak", "tennis ace", "serve and volley"]
         },
         {
           "tag": "baseball",
@@ -31,7 +31,7 @@
         {
           "tag": "hockey",
           "status": "y",
-          "keywords": ["nhl", "hockey", "stanley cup", "hat trick", "power play", "penalty box", "goaltender", "slap shot", "icing", "bruins", "rangers", "maple leafs", "canadiens", "blackhawks", "penguins", "oilers", "lightning", "avalanche", "panthers", "hurricanes", "stars", "kraken", "golden knights", "flames", "canucks", "red wings", "devils", "islanders", "senators", "jets", "predators", "blues", "sharks", "flyers", "wild", "sabres", "blue jackets", "ducks", "capitals", "coyotes"]
+          "keywords": ["nhl", "hockey", "ice hockey", "stanley cup", "hat trick", "power play", "penalty box", "goaltender", "slap shot", "icing", "bruins", "rangers", "maple leafs", "canadiens", "blackhawks", "penguins", "oilers", "lightning", "avalanche", "panthers", "hurricanes", "stars", "kraken", "golden knights", "flames", "canucks", "red wings", "devils", "islanders", "senators", "jets", "predators", "blues", "sharks", "flyers", "wild", "sabres", "blue jackets", "ducks", "capitals", "coyotes"]
         },
         {
           "tag": "college_sports",
@@ -41,7 +41,7 @@
         {
           "tag": "golf",
           "status": "y",
-          "keywords": ["golf", "pga", "lpga", "masters", "the open", "ryder cup", "birdie", "eagle", "bogey", "hole-in-one", "tiger woods", "scottie scheffler", "rory mcilroy", "liv golf"]
+          "keywords": ["golf", "pga", "lpga", "masters", "the open", "ryder cup", "birdie", "eagle", "bogey", "hole-in-one", "tiger woods", "scottie scheffler", "rory mcilroy", "liv golf", "putter"]
         },
         {
           "tag": "mma",
@@ -76,7 +76,7 @@
         {
           "tag": "betting",
           "status": "y",
-          "keywords": ["odds", "spread", "moneyline", "over under", "point spread", "parlay", "sportsbook", "prop bet", "betting line", "picks", "prediction"]
+          "keywords": ["odds", "spread", "moneyline", "over under", "point spread", "parlay", "sportsbook", "prop bet", "betting line", "picks", "prediction", "fanduel", "draftkings", "kalshi", "polymarket"]
         }
       ]
     },
@@ -376,7 +376,7 @@
         {
           "tag": "mergers",
           "status": "y",
-          "keywords": ["merger", "acquisition", "buyout", "takeover", "antitrust", "ftc", "doj", "monopoly", "deal", "joint venture", "spin-off", "divestiture"]
+          "keywords": ["merger", "acquisition", "buyout", "takeover", "antitrust", "ftc", "monopoly", "joint venture", "spin-off", "divestiture", "corporate deal", "mega deal"]
         },
         {
           "tag": "layoffs",
@@ -386,7 +386,7 @@
         {
           "tag": "labor",
           "status": "y",
-          "keywords": ["strike", "union", "labor dispute", "walkout", "collective bargaining", "minimum wage", "workers rights", "picket", "uaw", "teamsters"]
+          "keywords": ["labor strike", "labor union", "workers union", "labor dispute", "walkout", "collective bargaining", "minimum wage", "workers rights", "picket", "uaw", "teamsters"]
         },
         {
           "tag": "supply_chain",
@@ -506,7 +506,7 @@
         {
           "tag": "eu",
           "status": "y",
-          "keywords": ["european union", "eu", "brussels", "european commission", "european parliament", "eurozone", "euro", "schengen", "eu regulation"]
+          "keywords": ["european union", "the eu", "brussels", "european commission", "european parliament", "eurozone", "euro", "schengen", "eu regulation"]
         },
         {
           "tag": "uk",

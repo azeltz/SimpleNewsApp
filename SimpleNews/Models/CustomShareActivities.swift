@@ -25,7 +25,7 @@ private func topViewController(from root: UIViewController?) -> UIViewController
 }
 
 func presentShareSheet(for items: [Any]) {
-    print("presentShareSheet called with items: \(items)")
+    Log.export.debug("presentShareSheet called")
 
     guard
         let scene = UIApplication.shared.connectedScenes
@@ -35,7 +35,7 @@ func presentShareSheet(for items: [Any]) {
         let root = keyWindow.rootViewController,
         let top = topViewController(from: root)
     else {
-        print("presentShareSheet: could not resolve top view controller")
+        Log.export.error("presentShareSheet: could not resolve top view controller")
         return
     }
 
@@ -51,7 +51,7 @@ func presentShareSheet(for items: [Any]) {
     }
 
     top.present(controller, animated: true) {
-        print("presentShareSheet: presented secondary share sheet from \(type(of: top))")
+        Log.export.debug("presentShareSheet: presented secondary share sheet")
     }
 }
 
@@ -72,8 +72,12 @@ func sanitizeFilename(_ input: String, maxLength: Int = 50) -> String {
 // MARK: - Text → Image helper
 
 /// Renders a white image with a large title, source+timestamp line, and big body text.
-func imageFrom(text: String, title: String?, sourceLine: String?) -> UIImage {
+/// When a hero image is provided it is drawn in the top-right corner at correct aspect
+/// ratio with the title/body text wrapping around it.
+func imageFrom(text: String, title: String?, sourceLine: String?, heroImage: UIImage? = nil) -> UIImage {
     let size = CGSize(width: 1080, height: 1350)
+    let inset: CGFloat = 32
+    let contentWidth = size.width - inset * 2
     let renderer = UIGraphicsImageRenderer(size: size)
 
     return renderer.image { _ in
@@ -84,56 +88,134 @@ func imageFrom(text: String, title: String?, sourceLine: String?) -> UIImage {
         let metaFont  = UIFont.systemFont(ofSize: 20)
         let bodyFont  = UIFont.systemFont(ofSize: 26)
 
-        var y: CGFloat = 40
+        // Hero image: top-right corner, correct aspect ratio
+        let heroGap: CGFloat = 16
+        var heroRect: CGRect = .zero
+        var heroBottomY: CGFloat = inset // where the hero image ends vertically
+        if let hero = heroImage {
+            let maxW: CGFloat = contentWidth * 0.35
+            let maxH: CGFloat = 280
+            let aspect = hero.size.width / max(hero.size.height, 1)
+            var drawW = maxW
+            var drawH = drawW / aspect
+            if drawH > maxH {
+                drawH = maxH
+                drawW = drawH * aspect
+            }
+            heroRect = CGRect(
+                x: size.width - inset - drawW,
+                y: inset,
+                width: drawW,
+                height: drawH
+            )
+            hero.draw(in: heroRect)
+            heroBottomY = heroRect.maxY + heroGap
+        }
+
+        var y: CGFloat = inset
+
+        // Helper: available text width at current y (narrower while beside hero)
+        func textWidth(at yPos: CGFloat) -> CGFloat {
+            if heroRect != .zero && yPos < heroBottomY {
+                return contentWidth - heroRect.width - heroGap
+            }
+            return contentWidth
+        }
 
         // Title
         if let title, !title.isEmpty {
+            let tw = textWidth(at: y)
             let attrs: [NSAttributedString.Key: Any] = [
                 .font: titleFont,
                 .foregroundColor: UIColor.black
             ]
-            let rect = CGRect(x: 32, y: y, width: size.width - 64, height: .greatestFiniteMagnitude)
             let str = NSAttributedString(string: title, attributes: attrs)
             let bounds = str.boundingRect(
-                with: rect.size,
+                with: CGSize(width: tw, height: .greatestFiniteMagnitude),
                 options: [.usesLineFragmentOrigin, .usesFontLeading],
                 context: nil
             )
-            str.draw(in: CGRect(x: 32, y: y, width: rect.width, height: ceil(bounds.height)))
+            str.draw(in: CGRect(x: inset, y: y, width: tw, height: ceil(bounds.height)))
             y += ceil(bounds.height) + 8
         }
 
         // Source + timestamp
         if let sourceLine, !sourceLine.isEmpty {
+            let tw = textWidth(at: y)
             let attrs: [NSAttributedString.Key: Any] = [
                 .font: metaFont,
                 .foregroundColor: UIColor.darkGray
             ]
-            let rect = CGRect(x: 32, y: y, width: size.width - 64, height: .greatestFiniteMagnitude)
             let str = NSAttributedString(string: sourceLine, attributes: attrs)
             let bounds = str.boundingRect(
-                with: rect.size,
+                with: CGSize(width: tw, height: .greatestFiniteMagnitude),
                 options: [.usesLineFragmentOrigin, .usesFontLeading],
                 context: nil
             )
-            str.draw(in: CGRect(x: 32, y: y, width: rect.width, height: ceil(bounds.height)))
+            str.draw(in: CGRect(x: inset, y: y, width: tw, height: ceil(bounds.height)))
             y += ceil(bounds.height) + 24
         } else {
             y += 16
         }
 
-        // Body
-        let bodyAttrs: [NSAttributedString.Key: Any] = [
-            .font: bodyFont,
-            .foregroundColor: UIColor.black
-        ]
-        let bodyRect = CGRect(x: 32, y: y, width: size.width - 64, height: size.height - y - 40)
-        let bodyStr = NSAttributedString(string: text, attributes: bodyAttrs)
-        bodyStr.draw(
-            with: bodyRect,
-            options: [.usesLineFragmentOrigin, .usesFontLeading],
-            context: nil
+        // Body – use Core Text to wrap around hero image
+        let bodyAttr = NSAttributedString(
+            string: text,
+            attributes: [
+                .font: bodyFont,
+                .foregroundColor: UIColor.black
+            ]
         )
+
+        let bodyBottom = size.height - inset
+        let bodyHeight = bodyBottom - y
+        guard bodyHeight > 0 else { return }
+
+        // Full body rect in UIKit coordinates
+        let fullBodyRect = CGRect(x: inset, y: y, width: contentWidth, height: bodyHeight)
+
+        // Convert to Core Text flipped coordinates
+        let ctBodyRect = CGRect(
+            x: fullBodyRect.minX,
+            y: size.height - fullBodyRect.maxY,
+            width: fullBodyRect.width,
+            height: fullBodyRect.height
+        )
+
+        // Exclusion zone for hero image remainder (portion that overlaps body area)
+        guard let ctx = UIGraphicsGetCurrentContext() else { return }
+        ctx.saveGState()
+        ctx.textMatrix = .identity
+        ctx.translateBy(x: 0, y: size.height)
+        ctx.scaleBy(x: 1, y: -1)
+
+        let framePath = CGMutablePath()
+        framePath.addRect(ctBodyRect)
+
+        if heroRect != .zero && y < heroBottomY {
+            // Exclusion rect in CT flipped coords
+            let exclUIKit = CGRect(
+                x: heroRect.minX - heroGap,
+                y: y,
+                width: heroRect.width + heroGap,
+                height: heroBottomY - y
+            )
+            let exclCT = CGRect(
+                x: exclUIKit.minX,
+                y: size.height - exclUIKit.maxY,
+                width: exclUIKit.width,
+                height: exclUIKit.height
+            )
+            framePath.addRect(exclCT)
+        }
+
+        let framesetter = CTFramesetterCreateWithAttributedString(bodyAttr)
+        let frameAttrs: [CFString: Any] = [
+            kCTFrameClippingPathsAttributeName: [] as CFArray
+        ]
+        let frame = CTFramesetterCreateFrame(framesetter, CFRange(location: 0, length: 0), framePath, frameAttrs as CFDictionary)
+        CTFrameDraw(frame, ctx)
+        ctx.restoreGState()
     }
 }
 
@@ -155,7 +237,7 @@ final class CopyLinkActivity: UIActivity {
     }
 
     override func perform() {
-        print("CopyLinkActivity.perform called, url = \(String(describing: url))")
+        Log.export.debug("CopyLinkActivity.perform called")
 
         if let url {
             UIPasteboard.general.string = url.absoluteString
@@ -173,6 +255,7 @@ final class ExportPDFActivity: UIActivity {
     private var titleText: String?
     private var sourceText: String?
     private var timestampText: String?
+    private var heroImage: UIImage?
 
     override var activityTitle: String? { "Export as PDF" }
     override var activityImage: UIImage? { UIImage(systemName: "doc.richtext") }
@@ -183,6 +266,7 @@ final class ExportPDFActivity: UIActivity {
     }
 
     override func prepare(withActivityItems activityItems: [Any]) {
+        heroImage = activityItems.first { $0 is UIImage } as? UIImage
         let strings = activityItems.compactMap { $0 as? String }
         if strings.count > 0 { bodyText = strings[0] }
         if strings.count > 1 { titleText = strings[1] }
@@ -191,10 +275,10 @@ final class ExportPDFActivity: UIActivity {
     }
 
     override func perform() {
-        print("ExportPDFActivity.perform called, bodyText = \(bodyText != nil)")
+        Log.export.debug("ExportPDFActivity.perform called")
 
         guard let bodyText else {
-            print("ExportPDFActivity: missing bodyText")
+            Log.export.warning("ExportPDFActivity: missing bodyText")
             activityDidFinish(false)
             return
         }
@@ -268,19 +352,53 @@ final class ExportPDFActivity: UIActivity {
             var currentLocation: CFIndex = 0
             var pageNumber = 1
 
-            func drawHeader(in context: CGContext) -> CGFloat {
+            let capturedHeroImage = self.heroImage
+            let heroGap: CGFloat = 8
+            var pdfHeroRect: CGRect = .zero
+            var pdfHeroBottomY: CGFloat = insetRect.minY
+
+            // Compute hero image rect once (top-right corner of first page)
+            if let hero = capturedHeroImage {
+                let maxW = insetRect.width * 0.35
+                let maxH: CGFloat = 160
+                let aspect = hero.size.width / max(hero.size.height, 1)
+                var drawW = maxW
+                var drawH = drawW / aspect
+                if drawH > maxH {
+                    drawH = maxH
+                    drawW = drawH * aspect
+                }
+                pdfHeroRect = CGRect(
+                    x: insetRect.maxX - drawW,
+                    y: insetRect.minY,
+                    width: drawW,
+                    height: drawH
+                )
+                pdfHeroBottomY = pdfHeroRect.maxY + heroGap
+            }
+
+            func drawHeader(in context: CGContext, isFirstPage: Bool) -> CGFloat {
                 var y = insetRect.minY
+
+                // Draw hero image in top-right corner on first page only
+                if isFirstPage, let hero = capturedHeroImage {
+                    hero.draw(in: pdfHeroRect)
+                }
+
+                let textWidth: CGFloat = isFirstPage && pdfHeroRect != .zero
+                    ? insetRect.width - pdfHeroRect.width - heroGap
+                    : insetRect.width
 
                 if let titleAttr = headerTitleAttr {
                     let bounds = titleAttr.boundingRect(
-                        with: CGSize(width: insetRect.width, height: .greatestFiniteMagnitude),
+                        with: CGSize(width: textWidth, height: .greatestFiniteMagnitude),
                         options: [.usesLineFragmentOrigin, .usesFontLeading],
                         context: nil
                     )
                     titleAttr.draw(
                         in: CGRect(x: insetRect.minX,
                                    y: y,
-                                   width: insetRect.width,
+                                   width: textWidth,
                                    height: ceil(bounds.height))
                     )
                     y += ceil(bounds.height) + 4
@@ -288,19 +406,24 @@ final class ExportPDFActivity: UIActivity {
 
                 if let metaAttr = headerMetaAttr {
                     let bounds = metaAttr.boundingRect(
-                        with: CGSize(width: insetRect.width, height: .greatestFiniteMagnitude),
+                        with: CGSize(width: textWidth, height: .greatestFiniteMagnitude),
                         options: [.usesLineFragmentOrigin, .usesFontLeading],
                         context: nil
                     )
                     metaAttr.draw(
                         in: CGRect(x: insetRect.minX,
                                    y: y,
-                                   width: insetRect.width,
+                                   width: textWidth,
                                    height: ceil(bounds.height))
                     )
                     y += ceil(bounds.height) + 16
                 } else {
                     y += 8
+                }
+
+                // Ensure body starts below the hero image on page 1
+                if isFirstPage && y < pdfHeroBottomY {
+                    // Don't push y down — let Core Text wrap around via exclusion
                 }
 
                 return y
@@ -325,7 +448,7 @@ final class ExportPDFActivity: UIActivity {
                 ctx.beginPage()
 
                 // Draw header in UIKit coordinates
-                let headerBottomY = drawHeader(in: ctx.cgContext)
+                let headerBottomY = drawHeader(in: ctx.cgContext, isFirstPage: pageNumber == 1)
 
                 // Draw page number at bottom
                 drawPageNumber(pageNumber, in: ctx.cgContext)
@@ -345,12 +468,34 @@ final class ExportPDFActivity: UIActivity {
                     width: insetRect.width,
                     height: frameHeight
                 )
-                let path = CGPath(rect: frameRect, transform: nil)
+
+                let framePath = CGMutablePath()
+                framePath.addRect(frameRect)
+
+                // On the first page, add an exclusion rect for the hero image
+                // so body text wraps around it
+                if pageNumber == 1 && pdfHeroRect != .zero && headerBottomY < pdfHeroBottomY {
+                    let exclHeight = pdfHeroBottomY - headerBottomY
+                    let exclUIKit = CGRect(
+                        x: pdfHeroRect.minX - heroGap,
+                        y: headerBottomY,
+                        width: pdfHeroRect.width + heroGap,
+                        height: exclHeight
+                    )
+                    // Convert to CT flipped coords
+                    let exclCT = CGRect(
+                        x: exclUIKit.minX,
+                        y: pageRect.height - exclUIKit.maxY,
+                        width: exclUIKit.width,
+                        height: exclUIKit.height
+                    )
+                    framePath.addRect(exclCT)
+                }
 
                 let frame = CTFramesetterCreateFrame(
                     framesetter,
                     CFRange(location: currentLocation, length: 0),
-                    path,
+                    framePath,
                     nil
                 )
 
@@ -373,11 +518,11 @@ final class ExportPDFActivity: UIActivity {
 
         do {
             try data.write(to: url)
-            print("ExportPDFActivity: wrote PDF to \(url)")
+            Log.export.debug("ExportPDFActivity: wrote PDF")
             presentShareSheet(for: [url])
             activityDidFinish(true)
         } catch {
-            print("ExportPDFActivity: failed to write PDF: \(error)")
+            Log.export.error("ExportPDFActivity: failed to write PDF: \(error)")
             activityDidFinish(false)
         }
     }
@@ -390,6 +535,7 @@ final class ExportImageActivity: UIActivity {
     private var titleText: String?
     private var sourceText: String?
     private var timestampText: String?
+    private var heroImage: UIImage?
 
     override var activityTitle: String? { "Export as Image" }
     override var activityImage: UIImage? { UIImage(systemName: "photo") }
@@ -400,6 +546,7 @@ final class ExportImageActivity: UIActivity {
     }
 
     override func prepare(withActivityItems activityItems: [Any]) {
+        heroImage = activityItems.first { $0 is UIImage } as? UIImage
         let strings = activityItems.compactMap { $0 as? String }
         if strings.count > 0 { bodyText = strings[0] }
         if strings.count > 1 { titleText = strings[1] }
@@ -408,10 +555,10 @@ final class ExportImageActivity: UIActivity {
     }
 
     override func perform() {
-        print("ExportImageActivity.perform called, bodyText = \(bodyText != nil)")
+        Log.export.debug("ExportImageActivity.perform called")
 
         guard let bodyText else {
-            print("ExportImageActivity: missing bodyText")
+            Log.export.warning("ExportImageActivity: missing bodyText")
             activityDidFinish(false)
             return
         }
@@ -429,8 +576,8 @@ final class ExportImageActivity: UIActivity {
             metaLine = ""
         }
 
-        let image = imageFrom(text: bodyText, title: titleText, sourceLine: metaLine)
-        print("ExportImageActivity: generated image size = \(image.size)")
+        let image = imageFrom(text: bodyText, title: titleText, sourceLine: metaLine, heroImage: heroImage)
+        Log.export.debug("ExportImageActivity: generated image")
         
         // Generate filename from title + timestamp
         let timestamp = Int(Date().timeIntervalSince1970)
@@ -442,10 +589,10 @@ final class ExportImageActivity: UIActivity {
         if let pngData = image.pngData() {
             do {
                 try pngData.write(to: tempURL)
-                print("ExportImageActivity: wrote image to \(tempURL)")
+                Log.export.debug("ExportImageActivity: wrote image")
                 presentShareSheet(for: [tempURL])
             } catch {
-                print("ExportImageActivity: failed to write image: \(error)")
+                Log.export.error("ExportImageActivity: failed to write image: \(error)")
                 presentShareSheet(for: [image])
             }
         } else {

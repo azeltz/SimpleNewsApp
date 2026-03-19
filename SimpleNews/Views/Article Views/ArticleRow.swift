@@ -1,21 +1,21 @@
 //
-//  ArticleGroupRow.swift
+//  ArticleRow.swift
 //  SimpleNews
 //
-//  Created by Amir Zeltzer on 3/3/26.
+//  Created by Amir Zeltzer on 2/13/26.
 //
 
 import SwiftUI
 
-fileprivate let groupRowDateFormatter: DateFormatter = {
+fileprivate let articleDateFormatter: DateFormatter = {
     let f = DateFormatter()
     f.dateStyle = .medium
     f.timeStyle = .short
     return f
 }()
 
-struct ArticleGroupRow: View {
-    let group: ArticleGroup
+struct ArticleRow: View {
+    let article: Article
     let showImages: Bool
     let showDescription: Bool
     let isExpanded: Bool
@@ -26,10 +26,9 @@ struct ArticleGroupRow: View {
     let onOpenLink: () -> Void
     let onToggleExpanded: () -> Void
 
-    private var article: Article { group.primaryArticle }
-
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
+            // Prefer feed image, fall back to reader-discovered image
             if showImages, let url = article.imageURL ?? article.readerImageURL {
                 AsyncImage(url: url) { phase in
                     switch phase {
@@ -49,11 +48,12 @@ struct ArticleGroupRow: View {
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(group.canonicalTitle)
+                Text(article.title)
                     .font(.subheadline)
                     .fontWeight(.semibold)
                     .lineLimit(3)
                     .onTapGesture { onOpenDetail() }
+                    .accessibilityAddTraits(.isButton)
 
                 if showDescription, let description = article.description {
                     Text(description)
@@ -61,23 +61,17 @@ struct ArticleGroupRow: View {
                         .foregroundColor(.secondary)
                         .lineLimit(isExpanded ? nil : 2)
                         .onTapGesture { onToggleExpanded() }
+                        .accessibilityAddTraits(.isButton)
                 }
 
-                HStack(spacing: 4) {
-                    if let source = article.source {
-                        Text(source)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                    if group.allArticles.count > 1 {
-                        Text("+\(group.allArticles.count - 1) more")
-                            .font(.caption2)
-                            .foregroundColor(.blue)
-                    }
+                if let source = article.source {
+                    Text(source)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                 }
 
                 if let publishedAt = article.publishedAt {
-                    Text(groupRowDateFormatter.string(from: publishedAt))
+                    Text(articleDateFormatter.string(from: publishedAt))
                         .font(.caption2)
                         .foregroundColor(.secondary)
                 }
@@ -89,7 +83,10 @@ struct ArticleGroupRow: View {
                                 .font(.caption2)
                                 .padding(.horizontal, 4)
                                 .padding(.vertical, 2)
-                                .background(Capsule().fill(Color.secondary.opacity(0.15)))
+                                .background(
+                                    Capsule()
+                                        .fill(Color.secondary.opacity(0.15))
+                                )
                                 .foregroundColor(.secondary)
                         }
                     }
@@ -104,14 +101,16 @@ struct ArticleGroupRow: View {
                     tint: article.isSaved ? .blue : .secondary,
                     action: onToggleSaved
                 )
+
                 tappableIcon(
                     systemName: "chevron.right",
                     tint: .secondary,
                     action: onOpenDetail
                 )
+
                 if article.url != nil {
                     tappableIcon(
-                        systemName: "safari",
+                        systemName: "doc.text.magnifyingglass",
                         tint: .blue,
                         action: onOpenLink
                     )
@@ -136,3 +135,39 @@ struct ArticleGroupRow: View {
         .buttonStyle(.borderless)
     }
 }
+// MARK: - Previews
+
+#if DEBUG
+#Preview("Article Row") {
+    List {
+        ArticleRow(
+            article: PreviewData.sampleArticle,
+            showImages: true,
+            showDescription: true,
+            isExpanded: false,
+            showTags: true,
+            onToggleSaved: {},
+            onOpenDetail: {},
+            onOpenLink: {},
+            onToggleExpanded: {}
+        )
+    }
+}
+
+#Preview("Article Row - No Image") {
+    List {
+        ArticleRow(
+            article: PreviewData.sampleArticle3,
+            showImages: true,
+            showDescription: true,
+            isExpanded: false,
+            showTags: true,
+            onToggleSaved: {},
+            onOpenDetail: {},
+            onOpenLink: {},
+            onToggleExpanded: {}
+        )
+    }
+}
+#endif
+

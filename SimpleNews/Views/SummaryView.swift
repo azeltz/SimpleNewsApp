@@ -15,7 +15,7 @@ struct SummaryCardView: View {
     @State private var summaryText: String = ""
     @State private var isLoading: Bool = false
     @State private var errorMessage: String?
-    @State private var isCollapsed: Bool = false
+    @State private var isCollapsed: Bool = true
 
     private var groups: [ArticleGroup] {
         viewModel.groupedArticles
@@ -31,14 +31,31 @@ struct SummaryCardView: View {
             } label: {
                 HStack {
                     Image(systemName: "sparkles")
-                        .foregroundStyle(.blue)
+                        .foregroundStyle(.purple)
                     Text("Today's Summary")
                         .font(.headline)
-                    Spacer()
                     if isLoading {
                         ProgressView()
                             .scaleEffect(0.7)
+                    } else {
+                        Button {
+                            Task { await generateSummary() }
+                        } label: {
+                            Image(systemName: "arrow.clockwise")
+                                .font(.subheadline)
+                                .foregroundStyle(.blue)
+                                .frame(width: 32, height: 32)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+
+                        if !summaryText.isEmpty {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundStyle(.green)
+                                .font(.subheadline)
+                        }
                     }
+                    Spacer()
                     Image(systemName: isCollapsed ? "chevron.down" : "chevron.up")
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -86,17 +103,7 @@ struct SummaryCardView: View {
                     }
                 }
 
-                // Refresh button
-                if !isLoading {
-                    Button {
-                        Task { await generateSummary() }
-                    } label: {
-                        Label("Refresh", systemImage: "arrow.clockwise")
-                            .font(.caption)
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 12)
-                }
+
             }
         }
         .background(
@@ -129,3 +136,84 @@ struct SummaryCardView: View {
         isLoading = false
     }
 }
+
+// MARK: - Daily Digest Sheet (shown when notification is tapped)
+
+struct DailyDigestSheetView: View {
+    @ObservedObject var viewModel: NewsViewModel
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var summaryText: String = ""
+    @State private var isLoading: Bool = false
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "sparkle.text.clipboard.fill")
+                            .foregroundStyle(.purple)
+                        Text("Daily Digest")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                    }
+
+                    Text(DateFormatter.localizedString(from: Date(), dateStyle: .long, timeStyle: .none))
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+
+                    if isLoading {
+                        HStack {
+                            Spacer()
+                            ProgressView("Generating summary...")
+                            Spacer()
+                        }
+                        .padding(.vertical, 40)
+                    } else if summaryText.isEmpty {
+                        Text("No summary available yet.")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Text(summaryText)
+                            .font(.body)
+                            .lineSpacing(6)
+                    }
+                }
+                .padding()
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") { dismiss() }
+                }
+            }
+            .task {
+                await generateSummary()
+            }
+        }
+    }
+
+    private func generateSummary() async {
+        isLoading = true
+        let groups = viewModel.groupedArticles
+        do {
+            summaryText = try await SummaryService.summarize(groups: groups)
+        } catch {
+            summaryText = "Could not generate summary: \(error.localizedDescription)"
+        }
+        isLoading = false
+    }
+}
+
+#if DEBUG
+#Preview("Summary Card") {
+    PreviewWrapper {
+        List {
+            SummaryCardView(viewModel: NewsViewModel())
+        }
+    }
+}
+
+#Preview("Daily Digest Sheet") {
+    DailyDigestSheetView(viewModel: NewsViewModel())
+}
+#endif

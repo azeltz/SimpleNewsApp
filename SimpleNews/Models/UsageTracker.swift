@@ -15,8 +15,8 @@ final class UsageTracker: ObservableObject {
         case instagram = "Instagram"
         case reddit = "Reddit"
         case linkedin = "LinkedIn"
-        case x = "X"
-        case tiktok = "TikTok"
+        //case x = "X"
+        //case tiktok = "TikTok"
     }
 
     struct DaySummary: Codable {
@@ -105,7 +105,8 @@ final class UsageTracker: ObservableObject {
     func isOverSocialLimit(for screen: Screen) -> Bool {
         guard socialLimitMinutes > 0 else { return false }
         let today = todaySummary()
-        let socialScreens: [Screen] = [.instagram, .reddit, .linkedin, .x, .tiktok]
+        let socialScreens: [Screen] = [.instagram, .reddit, .linkedin] //, .x]
+        //, .tiktok]
         let totalSocial = socialScreens.reduce(0.0) { $0 + (today[$1] ?? 0) }
         return totalSocial / 60 >= Double(socialLimitMinutes)
     }
@@ -127,9 +128,12 @@ final class UsageTracker: ObservableObject {
     }
 
     private func loadHistory() {
-        guard let data = UserDefaults.standard.data(forKey: Self.storageKey),
-              let decoded = try? JSONDecoder().decode([DaySummary].self, from: data) else { return }
-        history = decoded
+        guard let data = UserDefaults.standard.data(forKey: Self.storageKey) else { return }
+        do {
+            history = try JSONDecoder().decode([DaySummary].self, from: data)
+        } catch {
+            Log.data.error("UsageTracker: decode failed – \(error)")
+        }
     }
 
     private func saveHistory() {

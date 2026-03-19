@@ -10,12 +10,11 @@ import UIKit
 
 struct NewsSourcesSettingsView: View {
     @EnvironmentObject var settingsStore: SettingsStore
+    @EnvironmentObject var sourcesStore: UserSourcesStore
     @ObservedObject var viewModel: NewsViewModel
+    @StateObject private var sourcesVM = SourcesViewModel()
 
     @State private var draftSettings: AppSettings = AppSettings.load()
-
-    // Preferred domains (Newsdata + quality mode)
-    @State private var newSourceDomain: String = ""
 
     // Backend feeds state (RSS worker)
     @State private var backendFeeds: [BackendFeed] = []
@@ -31,15 +30,82 @@ struct NewsSourcesSettingsView: View {
     var body: some View {
         Form {
             rssSection
-            newsdataSection
+            serverSourcesSection
         }
         .navigationTitle("News Sources")
         .onAppear {
             draftSettings = settingsStore.settings
             Task { await loadBackendFeeds() }
         }
-        .onDisappear {
+        .task {
+            await sourcesVM.loadSources()
+        }
+        .onChange(of: draftSettings) {
             applyChanges()
+        }
+        .onDisappear {
+            // Refresh the home feed so toggled sources take effect immediately
+            Task {
+                await viewModel.refreshIfAllowed(ignoreCooldown: true)
+            }
+        }
+    }
+
+    // MARK: - Server-driven sources section
+
+    private var serverSourcesSection: some View {
+        Section {
+            if sourcesVM.isLoading {
+                HStack {
+                    ProgressView()
+                    Text("Loading sources…")
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                        .padding(.leading, 8)
+                }
+            } else if let error = sourcesVM.errorMessage {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(error)
+                        .font(.footnote)
+                        .foregroundColor(.secondary)
+                    Button("Retry") {
+                        Task { await sourcesVM.loadSources() }
+                    }
+                    .font(.footnote)
+                }
+            } else if sourcesVM.sources.isEmpty {
+                Text("No sources available.")
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
+            } else {
+                // Select All / Deselect All
+                Button(sourcesVM.allEnabled ? "Deselect All" : "Select All") {
+                    sourcesVM.setAll(enabled: !sourcesVM.allEnabled)
+                }
+                .font(.subheadline)
+
+                // Grouped by domain
+                ForEach(sourcesVM.groupedSources, id: \.domain) { group in
+                    Section(group.domain) {
+                        ForEach(group.sources, id: \.self) { index in
+                            Toggle(isOn: Binding(
+                                get: { sourcesVM.sources[index].enabled },
+                                set: { _ in sourcesVM.toggle(at: index) }
+                            )) {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(sourcesVM.sources[index].description)
+                                        .font(.body)
+                                    Text(sourcesVM.sources[index].kindLabel)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } header: {
+            Text("Sources")
         }
     }
 
@@ -54,34 +120,7 @@ struct NewsSourcesSettingsView: View {
                 // 1) Google News favorites editor + default block
                 googleNewsFavoritesSection
 
-                // 2) Existing backend sources (only in this screen)
-                if isLoadingBackendFeeds {
-                    Text("Loading current backend sources...")
-                        .font(.footnote)
-                        .foregroundColor(.secondary)
-                } else if backendFeeds.isEmpty {
-                    Text("No backend sources configured yet.")
-                        .font(.footnote)
-                        .foregroundColor(.secondary)
-                } else {
-                    DisclosureGroup("Show existing backend sources") {
-                        ForEach(backendFeeds) { feed in
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(feed.id)
-                                    .font(.subheadline)
-                                Text(feed.url)
-                                    .font(.footnote)
-                                    .foregroundColor(.secondary)
-                                Text("\(feed.source) • kind: \(feed.kind)\(scheduleLabel(feed.schedule))")
-                                    .font(.footnote)
-                                    .foregroundColor(.secondary)
-                            }
-                            .padding(.vertical, 2)
-                        }
-                    }
-                }
-
-                // Navigation to advanced "Add source to backend" form
+                // 2) Navigation to advanced "Add source to backend" form
                 NavigationLink {
                     BackendSourceEditorView(
                         existingFeeds: backendFeeds,
@@ -96,6 +135,11 @@ struct NewsSourcesSettingsView: View {
                         Text("Advanced: custom backend RSS feed")
                     }
                 }
+            } else {
+                Text("Turn this on to include a Google News feed based on your favorites.")
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }
@@ -211,59 +255,6 @@ struct NewsSourcesSettingsView: View {
         }
     }
 
-    // MARK: - Newsdata section
-
-    private var newsdataSection: some View {
-        Section("Newsdata") {
-            // Newsdata toggle
-            Toggle("Include Newsdata articles", isOn: $draftSettings.enableNewsdata)
-
-            if draftSettings.enableNewsdata {
-                // Quality + preferred domains
-                Toggle("Quality mode (use only preferred / top sources)", isOn: $draftSettings.qualityMode)
-
-                Text("When on, results are limited to your preferred domains if set, or a small set of top outlets, with less variety but higher consistency.")
-                    .font(.footnote)
-                    .foregroundColor(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                if draftSettings.preferredSources.isEmpty {
-                    Text("Preferred domains (optional): add sources like nytimes.com, apnews.com, haaretz.com. In quality mode, only these will be used if set.")
-                        .font(.footnote)
-                        .foregroundColor(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                } else {
-                    ForEach(draftSettings.preferredSources, id: \.self) { domain in
-                        Text(domain)
-                            .swipeActions {
-                                Button(role: .destructive) {
-                                    draftSettings.preferredSources.removeAll { $0 == domain }
-                                } label: {
-                                    Label("Remove", systemImage: "trash")
-                                }
-                            }
-                    }
-                }
-
-                HStack {
-                    TextField("Add domain (e.g. reuters.com)", text: $newSourceDomain)
-                        .autocapitalization(.none)
-                        .disableAutocorrection(true)
-                    Button("Add") {
-                        let trimmed = newSourceDomain
-                            .trimmingCharacters(in: .whitespacesAndNewlines)
-                            .lowercased()
-                        guard !trimmed.isEmpty else { return }
-                        if !draftSettings.preferredSources.contains(trimmed) {
-                            draftSettings.preferredSources.append(trimmed)
-                        }
-                        newSourceDomain = ""
-                    }
-                }
-            }
-        }
-    }
-
     // MARK: - Helpers
 
     private func scheduleLabel(_ schedule: BackendFeed.Schedule?) -> String {
@@ -280,13 +271,13 @@ struct NewsSourcesSettingsView: View {
     private func applyChanges() {
         settingsStore.settings = draftSettings
         settingsStore.settings.save()
-//        Task { @MainActor in
-//            await viewModel.refreshIfAllowed(ignoreCooldown: true)
-//        }
+        // Task { @MainActor in
+        //     await viewModel.refreshIfAllowed(ignoreCooldown: true)
+        // }
     }
 
     private func loadBackendFeeds() async {
-        let url = URL(string: "https://rss-aggregator.simplenews.workers.dev/feeds")!
+        let url = simpleNewsBackendBaseURL.appendingPathComponent("feeds")
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
 
@@ -367,6 +358,11 @@ private struct BackendSourceEditorView: View {
     @State private var backendSourceStatus: String?
 
     @State private var backendFeeds: [BackendFeed]
+
+    // Subscription auto-prompt state
+    @State private var pendingSubscriptionSources: [SubscriptionSource] = []
+    @State private var showSubscriptionPrompt = false
+    @State private var showSubscriptionLogin = false
 
     private let predefinedKinds = [
         "breaking",
@@ -525,6 +521,28 @@ private struct BackendSourceEditorView: View {
             }
         }
         .navigationTitle("Custom backend RSS")
+        .alert(
+            "\(pendingSubscriptionSources.first?.displayName ?? "This source") requires a login. Sign in now to access full articles?",
+            isPresented: $showSubscriptionPrompt
+        ) {
+            Button("Sign In") {
+                showSubscriptionLogin = true
+            }
+            Button("Later", role: .cancel) {
+                pendingSubscriptionSources.removeAll()
+            }
+        }
+        .sheet(isPresented: $showSubscriptionLogin, onDismiss: {
+            // Show next prompt if there are more pending sources
+            pendingSubscriptionSources.removeFirst()
+            if !pendingSubscriptionSources.isEmpty {
+                showSubscriptionPrompt = true
+            }
+        }) {
+            if let source = pendingSubscriptionSources.first {
+                SubscriptionLoginView(source: source, store: SubscriptionStore.shared)
+            }
+        }
     }
 
     // Helpers duplicated (small) for this view
@@ -562,7 +580,7 @@ private struct BackendSourceEditorView: View {
             kindToSend = selectedKind
         }
 
-        let workerURL = URL(string: "https://rss-aggregator.simplenews.workers.dev/feeds")!
+        let workerURL = simpleNewsBackendBaseURL.appendingPathComponent("feeds")
         var request = URLRequest(url: workerURL)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -599,13 +617,46 @@ private struct BackendSourceEditorView: View {
                 let ok = json["ok"] as? Bool,
                 ok == true
             {
+                // Parse subscriptionMeta for paywalled sources
+                var newSubSources: [SubscriptionSource] = []
+                if let metaArray = json["subscriptionMeta"] as? [[String: Any]] {
+                    for meta in metaArray {
+                        guard let domain = meta["domain"] as? String,
+                              let requiresLogin = meta["requiresLogin"] as? Bool,
+                              requiresLogin,
+                              let loginStr = meta["loginURL"] as? String,
+                              let loginURL = URL(string: loginStr) else { continue }
+                        let source = SubscriptionSource(
+                            id: "custom_\(domain)",
+                            domain: domain,
+                            displayName: domain,
+                            loginURL: loginURL,
+                            isCustom: true
+                        )
+                        newSubSources.append(source)
+                    }
+                }
+
                 await MainActor.run {
+                    let subStore = SubscriptionStore.shared
+                    for source in newSubSources {
+                        if !subStore.hasSource(for: source.domain) {
+                            subStore.addCustomSource(source)
+                        }
+                    }
+
                     backendSourceStatus = "Source added successfully."
                     feedId = ""
                     feedURL = ""
                     feedSource = ""
                     customKindName = ""
                     isCustomKind = false
+
+                    let actuallyNew = newSubSources.filter { subStore.hasSource(for: $0.domain) }
+                    if !actuallyNew.isEmpty {
+                        pendingSubscriptionSources = actuallyNew
+                        showSubscriptionPrompt = true
+                    }
                 }
 
                 // Reload feeds and propagate up
@@ -623,7 +674,7 @@ private struct BackendSourceEditorView: View {
     }
 
     private func reloadFeedsFromWorker() async {
-        let url = URL(string: "https://rss-aggregator.simplenews.workers.dev/feeds")!
+        let url = simpleNewsBackendBaseURL.appendingPathComponent("feeds")
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
 
@@ -642,29 +693,18 @@ private struct BackendSourceEditorView: View {
     }
 }
 
-struct SocialSourcesSettingsView: View {
-    @EnvironmentObject var settingsStore: SettingsStore
-    @State private var draftSettings: AppSettings = AppSettings.load()
+import SwiftUI
+
+struct SocialSourcesForm: View {
+    @Binding var draftSettings: AppSettings
 
     var body: some View {
         Form {
             Section("Social sources") {
                 Toggle("Show Instagram", isOn: $draftSettings.showInstagram)
-                    .onChange(of: draftSettings.showInstagram) {
-                        applyChanges()
-                    }
-
                 Toggle("Show Reddit", isOn: $draftSettings.showReddit)
-                    .onChange(of: draftSettings.showReddit) {
-                        applyChanges()
-                    }
-
                 Toggle("Show LinkedIn", isOn: $draftSettings.showLinkedIn)
-                    .onChange(of: draftSettings.showLinkedIn) {
-                        applyChanges()
-                    }
-
-                // If you later re‑enable X or TikTok, add toggles here too.
+                //Toggle("Show X (Twitter)", isOn: $draftSettings.showX)
 
                 Text("These control which social apps appear under the Social tab. Hiding a source does not affect your accounts or logins.")
                     .font(.footnote)
@@ -672,13 +712,22 @@ struct SocialSourcesSettingsView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .navigationTitle("Social sources")
-        .onAppear {
-            draftSettings = settingsStore.settings
-        }
-        .onDisappear {
-            applyChanges()
-        }
+    }
+}
+
+struct SocialSourcesSettingsView: View {
+    @EnvironmentObject var settingsStore: SettingsStore
+    @State private var draftSettings: AppSettings = AppSettings.load()
+
+    var body: some View {
+        SocialSourcesForm(draftSettings: $draftSettings)
+            .navigationTitle("Social sources")
+            .onAppear {
+                draftSettings = settingsStore.settings
+            }
+            .onChange(of: draftSettings) {
+                applyChanges()
+            }
     }
 
     private func applyChanges() {
@@ -686,3 +735,21 @@ struct SocialSourcesSettingsView: View {
         settingsStore.settings.save()
     }
 }
+#if DEBUG
+#Preview("News Sources Settings") {
+    PreviewWrapper {
+        NavigationStack {
+            NewsSourcesSettingsView(viewModel: NewsViewModel())
+        }
+    }
+}
+
+#Preview("Social Sources Settings") {
+    PreviewWrapper {
+        NavigationStack {
+            SocialSourcesSettingsView()
+        }
+    }
+}
+#endif
+

@@ -58,12 +58,8 @@ enum ArticleGrouper {
 
     private static func normalizedKey(for article: Article) -> String {
         let titleNorm = normalize(article.title)
-        let domain = article.url?.host?.replacingOccurrences(of: "www.", with: "") ?? ""
-        // Use a hash of the normalized title combined with nothing from domain
-        // so articles from different sources with the same title cluster together
-        let combined = titleNorm
-        // Simple hash-like key: use the normalized text itself (truncated for efficiency)
-        let truncated = String(combined.prefix(120))
+        // Use normalized title so articles from different sources with the same title cluster together
+        let truncated = String(titleNorm.prefix(120))
         return truncated.isEmpty ? UUID().uuidString : truncated
     }
 

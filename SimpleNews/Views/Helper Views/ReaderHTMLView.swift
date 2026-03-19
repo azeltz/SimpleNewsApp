@@ -13,6 +13,9 @@ struct ReaderHTMLView: UIViewRepresentable {
     @Binding var height: CGFloat
     @ObservedObject var controller: ReaderController
 
+    /// Optional persistent data store for subscription sessions.
+    var subscriptionDataStore: WKWebsiteDataStore? = nil
+
     /// Called when we successfully detect a main image URL from the loaded HTML.
     /// You can use this to update the Article / view model.
     var onImageFound: ((URL) -> Void)? = nil
@@ -22,7 +25,11 @@ struct ReaderHTMLView: UIViewRepresentable {
     }
 
     func makeUIView(context: Context) -> WKWebView {
-        let webView = WKWebView()
+        let config = WKWebViewConfiguration()
+        if let store = subscriptionDataStore {
+            config.websiteDataStore = store
+        }
+        let webView = WKWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = context.coordinator
 
         webView.isOpaque = false
@@ -53,6 +60,15 @@ struct ReaderHTMLView: UIViewRepresentable {
             self.parent = parent
         }
 
+        // Block all link navigation so taps don't leave the reader
+        func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+            if navigationAction.navigationType == .linkActivated {
+                decisionHandler(.cancel)
+                return
+            }
+            decisionHandler(.allow)
+        }
+
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
             webView.isOpaque = false
             webView.backgroundColor = .clear
@@ -60,7 +76,7 @@ struct ReaderHTMLView: UIViewRepresentable {
 
             DispatchQueue.main.async {
                 self.parent.controller.isLoaded = true
-                print("Reader loaded: isLoaded = \(self.parent.controller.isLoaded)")
+                Log.ui.debug("Reader loaded: isLoaded = \(self.parent.controller.isLoaded)")
             }
 
             // Update intrinsic height from content
@@ -94,16 +110,24 @@ struct ReaderHTMLView: UIViewRepresentable {
             })();
             """) { result, error in
                 guard error == nil,
-                      let src = result as? String,
-                      let url = URL(string: src) else {
+                      let src = result as? String else {
                     return
                 }
 
+                // Clean WEBP hints from discovered image URL
+                let cleaned = src
+                    .replacingOccurrences(of: ";cf=webp", with: "")
+                    .replacingOccurrences(of: "?cf=webp", with: "")
+                    .replacingOccurrences(of: "&cf=webp", with: "")
+
+                guard let url = URL(string: cleaned) else { return }
+
                 DispatchQueue.main.async {
-                    print("ReaderHTMLView: found image URL from reader HTML: \(url.absoluteString)")
                     self.parent.onImageFound?(url)
                 }
             }
         }
     }
 }
+
+

@@ -82,3 +82,11 @@ struct ImportURLView: View {
         isImporting = false
     }
 }
+
+#if DEBUG
+#Preview("Import URL") {
+    PreviewWrapper {
+        ImportURLView()
+    }
+}
+#endif

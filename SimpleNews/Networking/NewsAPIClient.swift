@@ -7,84 +7,68 @@
 
 import Foundation
 
-struct NewsdataResponse: Codable {
-    let results: [NewsdataArticle]
-}
-
-struct NewsdataArticle: Codable {
-    let title: String?
-    let description: String?
-    let content: String?
-    let image_url: String?
-    let category: [String]?
-    let source_id: String?
-    let pubDate: String?
-    let link: String?
-    let tags: [String]?
-
-    func toArticle() -> Article {
-        let date: Date?
-        if let pubDate = pubDate {
-            let formatter = DateFormatter()
-            formatter.locale = Locale(identifier: "en_US_POSIX")
-            formatter.timeZone = TimeZone(secondsFromGMT: 0)
-            formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
-            date = formatter.date(from: pubDate)
-        } else {
-            date = nil
-        }
-
-        return Article(
-            id: UUID().uuidString,
-            title: (title ?? "Untitled").decodedHTMLEntities,
-            description: description?.decodedHTMLEntities,
-            content: content?.decodedHTMLEntities,
-            imageURL: URL(string: image_url ?? ""),
-            source: source_id?.decodedHTMLEntities,
-            category: category?.first,
-            publishedAt: date,
-            url: URL(string: link ?? ""),
-            isSaved: false,
-            liked: nil,
-            aiTags: (tags ?? []).map { $0.decodedHTMLEntities }
-        )
-    }
-}
-
-final class NewsAPIClient {
-    private let apiKey = "pub_8cd7ea8761d74a95bea7b79a5c6cb8dd"
-    private let baseURL = URL(string: "https://newsdata.io/api/1/latest")!
-
-    func fetchArticles(params: [String: String]) async throws -> [Article] {
-        var components = URLComponents(url: baseURL, resolvingAgainstBaseURL: false)!
-        var queryItems = [URLQueryItem(name: "apikey", value: apiKey)]
-
-        for (key, value) in params {
-            queryItems.append(URLQueryItem(name: key, value: value))
-        }
-
-        components.queryItems = queryItems
-
-        let url = components.url!
-        let (data, _) = try await URLSession.shared.data(from: url)
-        let decoded = try JSONDecoder().decode(NewsdataResponse.self, from: data)
-        return decoded.results.map { $0.toArticle() }
-    }
-}
-
 // MARK: - HTML entities decoding
 
 extension String {
+    /// Lightweight HTML entity decoder that works reliably with all scripts
+    /// (Hebrew, Arabic, CJK, etc.) without depending on WebKit/NSAttributedString.
     var decodedHTMLEntities: String {
-        guard let data = self.data(using: .utf8) else { return self }
-        let options: [NSAttributedString.DocumentReadingOptionKey: Any] = [
-            .documentType: NSAttributedString.DocumentType.html,
-            .characterEncoding: String.Encoding.utf8.rawValue
+        guard contains("&") else { return self }
+
+        var result = self
+
+        // Named entities (most common in news feeds)
+        let namedEntities: [String: String] = [
+            "&amp;":   "&",
+            "&lt;":    "<",
+            "&gt;":    ">",
+            "&quot;":  "\"",
+            "&apos;":  "'",
+            "&#39;":   "'",
+            "&nbsp;":  " ",
+            "&ndash;": "\u{2013}",
+            "&mdash;": "\u{2014}",
+            "&lsquo;": "\u{2018}",
+            "&rsquo;": "\u{2019}",
+            "&ldquo;": "\u{201C}",
+            "&rdquo;": "\u{201D}",
+            "&hellip;": "\u{2026}",
+            "&copy;":  "\u{00A9}",
+            "&reg;":   "\u{00AE}",
+            "&trade;": "\u{2122}",
         ]
-        if let attr = try? NSAttributedString(data: data, options: options, documentAttributes: nil) {
-            return attr.string.replacingOccurrences(of: "\u{00A0}", with: " ")
-        } else {
-            return self
+
+        for (entity, replacement) in namedEntities {
+            result = result.replacingOccurrences(of: entity, with: replacement)
         }
+
+        // Numeric entities: &#123; (decimal) and &#x1A2B; (hex)
+        let decimalPattern = /&#(\d+);/
+        while let match = result.firstMatch(of: decimalPattern) {
+            if let codePoint = UInt32(match.1),
+               let scalar = Unicode.Scalar(codePoint) {
+                result.replaceSubrange(match.range, with: String(scalar))
+            } else {
+                break
+            }
+        }
+
+        let hexPattern = /&#[xX]([0-9a-fA-F]+);/
+        while let match = result.firstMatch(of: hexPattern) {
+            if let codePoint = UInt32(match.1, radix: 16),
+               let scalar = Unicode.Scalar(codePoint) {
+                result.replaceSubrange(match.range, with: String(scalar))
+            } else {
+                break
+            }
+        }
+
+        return result
+    }
+
+    /// Strips HTML tags from a string, leaving only text content.
+    var strippedHTMLTags: String {
+        replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }

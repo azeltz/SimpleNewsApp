@@ -7,11 +7,53 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		370848AC2F587BEE006AE805 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 370848AB2F587BEE006AE805 /* WidgetKit.framework */; };
+		370848AE2F587BEE006AE805 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 370848AD2F587BEE006AE805 /* SwiftUI.framework */; };
+		370848BF2F587BF0006AE805 /* SimpleNews WidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 370848AA2F587BEE006AE805 /* SimpleNews WidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		372D07D42F6B4EC1001439B9 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 370848AB2F587BEE006AE805 /* WidgetKit.framework */; };
+		372D07D52F6B4EC1001439B9 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 370848AD2F587BEE006AE805 /* SwiftUI.framework */; };
+		372D07E42F6B4EC2001439B9 /* SimpleNews WidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 372D07D32F6B4EC1001439B9 /* SimpleNews WidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		37565EA22F452C700001F4D6 /* Readability in Frameworks */ = {isa = PBXBuildFile; productRef = 37565EA12F452C700001F4D6 /* Readability */; };
 		37565EA42F452C700001F4D6 /* ReadabilityUI in Frameworks */ = {isa = PBXBuildFile; productRef = 37565EA32F452C700001F4D6 /* ReadabilityUI */; };
+		378084B72F58EE70000271B0 /* SimpleNews Watch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 378084972F58EE6F000271B0 /* SimpleNews Watch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		370848BD2F587BF0006AE805 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 37DCBD7A2D4F21FE00F87CB6 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 370848A92F587BEE006AE805;
+			remoteInfo = "SimpleNews WidgetExtension";
+		};
+		372D07E22F6B4EC2001439B9 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 37DCBD7A2D4F21FE00F87CB6 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 372D07D22F6B4EC1001439B9;
+			remoteInfo = "SimpleNews WidgetExtension";
+		};
+		378084A42F58EE70000271B0 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 37DCBD7A2D4F21FE00F87CB6 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 378084962F58EE6F000271B0;
+			remoteInfo = "SimpleNews Watch Watch App";
+		};
+		378084AE2F58EE70000271B0 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 37DCBD7A2D4F21FE00F87CB6 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 378084962F58EE6F000271B0;
+			remoteInfo = "SimpleNews Watch Watch App";
+		};
+		378084B52F58EE70000271B0 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 37DCBD7A2D4F21FE00F87CB6 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 378084962F58EE6F000271B0;
+			remoteInfo = "SimpleNews Watch Watch App";
+		};
 		37DCBD962D4F220000F87CB6 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 37DCBD7A2D4F21FE00F87CB6 /* Project object */;
@@ -28,15 +70,126 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		370848702F587A45006AE805 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				378084B72F58EE70000271B0 /* SimpleNews Watch Watch App.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		370848C42F587BF0006AE805 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				370848BF2F587BF0006AE805 /* SimpleNews WidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		372D07E92F6B4EC2001439B9 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				372D07E42F6B4EC2001439B9 /* SimpleNews WidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		370848AA2F587BEE006AE805 /* SimpleNews WidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "SimpleNews WidgetExtension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
+		370848AB2F587BEE006AE805 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		370848AD2F587BEE006AE805 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		372D07D32F6B4EC1001439B9 /* SimpleNews WidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "SimpleNews WidgetExtension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
+		378084972F58EE6F000271B0 /* SimpleNews Watch Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "SimpleNews Watch Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		378084A32F58EE70000271B0 /* SimpleNews Watch Watch AppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "SimpleNews Watch Watch AppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		378084AD2F58EE70000271B0 /* SimpleNews Watch Watch AppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "SimpleNews Watch Watch AppUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		37DCBD822D4F21FE00F87CB6 /* SimpleNews.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SimpleNews.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		37DCBD952D4F220000F87CB6 /* SimpleNewsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SimpleNewsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		37DCBD9F2D4F220000F87CB6 /* SimpleNewsUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SimpleNewsUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		370848C32F587BF0006AE805 /* Exceptions for "SimpleNews Widget" folder in "SimpleNews WidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+				SimpleNewsComplication.swift,
+			);
+			target = 370848A92F587BEE006AE805 /* SimpleNews WidgetExtension */;
+		};
+		372D07E82F6B4EC2001439B9 /* Exceptions for "SimpleNews Widget" folder in "SimpleNews WidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 372D07D22F6B4EC1001439B9 /* SimpleNews WidgetExtension */;
+		};
+		372D07F02F6B5059001439B9 /* Exceptions for "SimpleNews Widget" folder in "SimpleNews Watch Watch App" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				SimpleNewsComplication.swift,
+			);
+			target = 378084962F58EE6F000271B0 /* SimpleNews Watch Watch App */;
+		};
+		37982C8C2F575DF00081D11C /* Exceptions for "SimpleNews" folder in "SimpleNews" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+				Scripts/x.js,
+			);
+			target = 37DCBD812D4F21FE00F87CB6 /* SimpleNews */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		370848AF2F587BEE006AE805 /* SimpleNews Widget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				370848C32F587BF0006AE805 /* Exceptions for "SimpleNews Widget" folder in "SimpleNews WidgetExtension" target */,
+				372D07F02F6B5059001439B9 /* Exceptions for "SimpleNews Widget" folder in "SimpleNews Watch Watch App" target */,
+			);
+			path = "SimpleNews Widget";
+			sourceTree = "<group>";
+		};
+		372D07D62F6B4EC1001439B9 /* SimpleNews Widget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				372D07E82F6B4EC2001439B9 /* Exceptions for "SimpleNews Widget" folder in "SimpleNews WidgetExtension" target */,
+			);
+			path = "SimpleNews Widget";
+			sourceTree = "<group>";
+		};
+		378084982F58EE6F000271B0 /* SimpleNews Watch Watch App */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "SimpleNews Watch Watch App";
+			sourceTree = "<group>";
+		};
+		378084A62F58EE70000271B0 /* SimpleNews Watch Watch AppTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "SimpleNews Watch Watch AppTests";
+			sourceTree = "<group>";
+		};
+		378084B02F58EE70000271B0 /* SimpleNews Watch Watch AppUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "SimpleNews Watch Watch AppUITests";
+			sourceTree = "<group>";
+		};
 		37DCBD842D4F21FE00F87CB6 /* SimpleNews */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				37982C8C2F575DF00081D11C /* Exceptions for "SimpleNews" folder in "SimpleNews" target */,
+			);
 			path = SimpleNews;
 			sourceTree = "<group>";
 		};
@@ -53,6 +206,45 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		370848A72F587BEE006AE805 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				370848AE2F587BEE006AE805 /* SwiftUI.framework in Frameworks */,
+				370848AC2F587BEE006AE805 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		372D07D02F6B4EC1001439B9 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				372D07D52F6B4EC1001439B9 /* SwiftUI.framework in Frameworks */,
+				372D07D42F6B4EC1001439B9 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		378084942F58EE6F000271B0 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		378084A02F58EE70000271B0 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		378084AA2F58EE70000271B0 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		37DCBD7F2D4F21FE00F87CB6 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -82,6 +274,8 @@
 		37565EA02F452C700001F4D6 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				370848AB2F587BEE006AE805 /* WidgetKit.framework */,
+				370848AD2F587BEE006AE805 /* SwiftUI.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -92,6 +286,11 @@
 				37DCBD842D4F21FE00F87CB6 /* SimpleNews */,
 				37DCBD982D4F220000F87CB6 /* SimpleNewsTests */,
 				37DCBDA22D4F220000F87CB6 /* SimpleNewsUITests */,
+				370848AF2F587BEE006AE805 /* SimpleNews Widget */,
+				378084982F58EE6F000271B0 /* SimpleNews Watch Watch App */,
+				378084A62F58EE70000271B0 /* SimpleNews Watch Watch AppTests */,
+				378084B02F58EE70000271B0 /* SimpleNews Watch Watch AppUITests */,
+				372D07D62F6B4EC1001439B9 /* SimpleNews Widget */,
 				37565EA02F452C700001F4D6 /* Frameworks */,
 				37DCBD832D4F21FE00F87CB6 /* Products */,
 			);
@@ -103,6 +302,11 @@
 				37DCBD822D4F21FE00F87CB6 /* SimpleNews.app */,
 				37DCBD952D4F220000F87CB6 /* SimpleNewsTests.xctest */,
 				37DCBD9F2D4F220000F87CB6 /* SimpleNewsUITests.xctest */,
+				370848AA2F587BEE006AE805 /* SimpleNews WidgetExtension.appex */,
+				378084972F58EE6F000271B0 /* SimpleNews Watch Watch App.app */,
+				378084A32F58EE70000271B0 /* SimpleNews Watch Watch AppTests.xctest */,
+				378084AD2F58EE70000271B0 /* SimpleNews Watch Watch AppUITests.xctest */,
+				372D07D32F6B4EC1001439B9 /* SimpleNews WidgetExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -110,6 +314,120 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		370848A92F587BEE006AE805 /* SimpleNews WidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 370848C02F587BF0006AE805 /* Build configuration list for PBXNativeTarget "SimpleNews WidgetExtension" */;
+			buildPhases = (
+				370848A62F587BEE006AE805 /* Sources */,
+				370848A72F587BEE006AE805 /* Frameworks */,
+				370848A82F587BEE006AE805 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				370848AF2F587BEE006AE805 /* SimpleNews Widget */,
+			);
+			name = "SimpleNews WidgetExtension";
+			packageProductDependencies = (
+			);
+			productName = "SimpleNews WidgetExtension";
+			productReference = 370848AA2F587BEE006AE805 /* SimpleNews WidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		372D07D22F6B4EC1001439B9 /* SimpleNews WidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 372D07E52F6B4EC2001439B9 /* Build configuration list for PBXNativeTarget "SimpleNews WidgetExtension" */;
+			buildPhases = (
+				372D07CF2F6B4EC1001439B9 /* Sources */,
+				372D07D02F6B4EC1001439B9 /* Frameworks */,
+				372D07D12F6B4EC1001439B9 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				372D07D62F6B4EC1001439B9 /* SimpleNews Widget */,
+			);
+			name = "SimpleNews WidgetExtension";
+			packageProductDependencies = (
+			);
+			productName = "SimpleNews WidgetExtension";
+			productReference = 372D07D32F6B4EC1001439B9 /* SimpleNews WidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		378084962F58EE6F000271B0 /* SimpleNews Watch Watch App */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 378084B82F58EE70000271B0 /* Build configuration list for PBXNativeTarget "SimpleNews Watch Watch App" */;
+			buildPhases = (
+				378084932F58EE6F000271B0 /* Sources */,
+				378084942F58EE6F000271B0 /* Frameworks */,
+				378084952F58EE6F000271B0 /* Resources */,
+				372D07E92F6B4EC2001439B9 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				372D07E32F6B4EC2001439B9 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				378084982F58EE6F000271B0 /* SimpleNews Watch Watch App */,
+			);
+			name = "SimpleNews Watch Watch App";
+			packageProductDependencies = (
+			);
+			productName = "SimpleNews Watch Watch App";
+			productReference = 378084972F58EE6F000271B0 /* SimpleNews Watch Watch App.app */;
+			productType = "com.apple.product-type.application";
+		};
+		378084A22F58EE70000271B0 /* SimpleNews Watch Watch AppTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 378084BB2F58EE70000271B0 /* Build configuration list for PBXNativeTarget "SimpleNews Watch Watch AppTests" */;
+			buildPhases = (
+				3780849F2F58EE70000271B0 /* Sources */,
+				378084A02F58EE70000271B0 /* Frameworks */,
+				378084A12F58EE70000271B0 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				378084A52F58EE70000271B0 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				378084A62F58EE70000271B0 /* SimpleNews Watch Watch AppTests */,
+			);
+			name = "SimpleNews Watch Watch AppTests";
+			packageProductDependencies = (
+			);
+			productName = "SimpleNews Watch Watch AppTests";
+			productReference = 378084A32F58EE70000271B0 /* SimpleNews Watch Watch AppTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		378084AC2F58EE70000271B0 /* SimpleNews Watch Watch AppUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 378084BE2F58EE70000271B0 /* Build configuration list for PBXNativeTarget "SimpleNews Watch Watch AppUITests" */;
+			buildPhases = (
+				378084A92F58EE70000271B0 /* Sources */,
+				378084AA2F58EE70000271B0 /* Frameworks */,
+				378084AB2F58EE70000271B0 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				378084AF2F58EE70000271B0 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				378084B02F58EE70000271B0 /* SimpleNews Watch Watch AppUITests */,
+			);
+			name = "SimpleNews Watch Watch AppUITests";
+			packageProductDependencies = (
+			);
+			productName = "SimpleNews Watch Watch AppUITests";
+			productReference = 378084AD2F58EE70000271B0 /* SimpleNews Watch Watch AppUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 		37DCBD812D4F21FE00F87CB6 /* SimpleNews */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 37DCBDA92D4F220000F87CB6 /* Build configuration list for PBXNativeTarget "SimpleNews" */;
@@ -117,10 +435,14 @@
 				37DCBD7E2D4F21FE00F87CB6 /* Sources */,
 				37DCBD7F2D4F21FE00F87CB6 /* Frameworks */,
 				37DCBD802D4F21FE00F87CB6 /* Resources */,
+				370848702F587A45006AE805 /* Embed Watch Content */,
+				370848C42F587BF0006AE805 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				370848BE2F587BF0006AE805 /* PBXTargetDependency */,
+				378084B62F58EE70000271B0 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				37DCBD842D4F21FE00F87CB6 /* SimpleNews */,
@@ -187,9 +509,26 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1620;
+				LastSwiftUpdateCheck = 2630;
 				LastUpgradeCheck = 2620;
 				TargetAttributes = {
+					370848A92F587BEE006AE805 = {
+						CreatedOnToolsVersion = 26.3;
+					};
+					372D07D22F6B4EC1001439B9 = {
+						CreatedOnToolsVersion = 26.3;
+					};
+					378084962F58EE6F000271B0 = {
+						CreatedOnToolsVersion = 26.3;
+					};
+					378084A22F58EE70000271B0 = {
+						CreatedOnToolsVersion = 26.3;
+						TestTargetID = 378084962F58EE6F000271B0;
+					};
+					378084AC2F58EE70000271B0 = {
+						CreatedOnToolsVersion = 26.3;
+						TestTargetID = 378084962F58EE6F000271B0;
+					};
 					37DCBD812D4F21FE00F87CB6 = {
 						CreatedOnToolsVersion = 16.2;
 					};
@@ -223,11 +562,51 @@
 				37DCBD812D4F21FE00F87CB6 /* SimpleNews */,
 				37DCBD942D4F220000F87CB6 /* SimpleNewsTests */,
 				37DCBD9E2D4F220000F87CB6 /* SimpleNewsUITests */,
+				370848A92F587BEE006AE805 /* SimpleNews WidgetExtension */,
+				378084962F58EE6F000271B0 /* SimpleNews Watch Watch App */,
+				378084A22F58EE70000271B0 /* SimpleNews Watch Watch AppTests */,
+				378084AC2F58EE70000271B0 /* SimpleNews Watch Watch AppUITests */,
+				372D07D22F6B4EC1001439B9 /* SimpleNews WidgetExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		370848A82F587BEE006AE805 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		372D07D12F6B4EC1001439B9 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		378084952F58EE6F000271B0 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		378084A12F58EE70000271B0 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		378084AB2F58EE70000271B0 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		37DCBD802D4F21FE00F87CB6 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -252,6 +631,41 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		370848A62F587BEE006AE805 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		372D07CF2F6B4EC1001439B9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		378084932F58EE6F000271B0 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3780849F2F58EE70000271B0 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		378084A92F58EE70000271B0 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		37DCBD7E2D4F21FE00F87CB6 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -276,6 +690,31 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		370848BE2F587BF0006AE805 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 370848A92F587BEE006AE805 /* SimpleNews WidgetExtension */;
+			targetProxy = 370848BD2F587BF0006AE805 /* PBXContainerItemProxy */;
+		};
+		372D07E32F6B4EC2001439B9 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 372D07D22F6B4EC1001439B9 /* SimpleNews WidgetExtension */;
+			targetProxy = 372D07E22F6B4EC2001439B9 /* PBXContainerItemProxy */;
+		};
+		378084A52F58EE70000271B0 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 378084962F58EE6F000271B0 /* SimpleNews Watch Watch App */;
+			targetProxy = 378084A42F58EE70000271B0 /* PBXContainerItemProxy */;
+		};
+		378084AF2F58EE70000271B0 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 378084962F58EE6F000271B0 /* SimpleNews Watch Watch App */;
+			targetProxy = 378084AE2F58EE70000271B0 /* PBXContainerItemProxy */;
+		};
+		378084B62F58EE70000271B0 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 378084962F58EE6F000271B0 /* SimpleNews Watch Watch App */;
+			targetProxy = 378084B52F58EE70000271B0 /* PBXContainerItemProxy */;
+		};
 		37DCBD972D4F220000F87CB6 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 37DCBD812D4F21FE00F87CB6 /* SimpleNews */;
@@ -289,6 +728,297 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		370848C12F587BF0006AE805 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 259B7JUXCA;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "SimpleNews Widget/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "SimpleNews Widget";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "zeltzer.alpha-simplenews.SimpleNews.SimpleNews-Widget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		370848C22F587BF0006AE805 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 259B7JUXCA;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "SimpleNews Widget/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "SimpleNews Widget";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "zeltzer.alpha-simplenews.SimpleNews.SimpleNews-Widget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		372D07E62F6B4EC2001439B9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 259B7JUXCA;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "SimpleNews Widget/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "SimpleNews Widget";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "zeltzer.alpha-simplenews.SimpleNews.watchkitapp.SimpleNews-Widget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.2;
+			};
+			name = Debug;
+		};
+		372D07E72F6B4EC2001439B9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 259B7JUXCA;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "SimpleNews Widget/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "SimpleNews Widget";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "zeltzer.alpha-simplenews.SimpleNews.watchkitapp.SimpleNews-Widget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 26.2;
+			};
+			name = Release;
+		};
+		378084B92F58EE70000271B0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 259B7JUXCA;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "SimpleNews Watch";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "zeltzer.alpha-simplenews.SimpleNews";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "zeltzer.alpha-simplenews.SimpleNews.watchkitapp";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 26.2;
+			};
+			name = Debug;
+		};
+		378084BA2F58EE70000271B0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 259B7JUXCA;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "SimpleNews Watch";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "zeltzer.alpha-simplenews.SimpleNews";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "zeltzer.alpha-simplenews.SimpleNews.watchkitapp";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 26.2;
+			};
+			name = Release;
+		};
+		378084BC2F58EE70000271B0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 259B7JUXCA;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "zeltzer.alpha-simplenews.SimpleNews-Watch-Watch-AppTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SimpleNews Watch Watch App.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SimpleNews Watch Watch App";
+				WATCHOS_DEPLOYMENT_TARGET = 26.2;
+			};
+			name = Debug;
+		};
+		378084BD2F58EE70000271B0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 259B7JUXCA;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "zeltzer.alpha-simplenews.SimpleNews-Watch-Watch-AppTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SimpleNews Watch Watch App.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SimpleNews Watch Watch App";
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 26.2;
+			};
+			name = Release;
+		};
+		378084BF2F58EE70000271B0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 259B7JUXCA;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "zeltzer.alpha-simplenews.SimpleNews-Watch-Watch-AppUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_TARGET_NAME = "SimpleNews Watch Watch App";
+				WATCHOS_DEPLOYMENT_TARGET = 26.2;
+			};
+			name = Debug;
+		};
+		378084C02F58EE70000271B0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 259B7JUXCA;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "zeltzer.alpha-simplenews.SimpleNews-Watch-Watch-AppUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_TARGET_NAME = "SimpleNews Watch Watch App";
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 26.2;
+			};
+			name = Release;
+		};
 		37DCBDA72D4F220000F87CB6 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -426,6 +1156,9 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SimpleNews/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = SimpleNews;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.news";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -469,6 +1202,9 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SimpleNews/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = SimpleNews;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.news";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -588,6 +1324,51 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		370848C02F587BF0006AE805 /* Build configuration list for PBXNativeTarget "SimpleNews WidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				370848C12F587BF0006AE805 /* Debug */,
+				370848C22F587BF0006AE805 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		372D07E52F6B4EC2001439B9 /* Build configuration list for PBXNativeTarget "SimpleNews WidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				372D07E62F6B4EC2001439B9 /* Debug */,
+				372D07E72F6B4EC2001439B9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		378084B82F58EE70000271B0 /* Build configuration list for PBXNativeTarget "SimpleNews Watch Watch App" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				378084B92F58EE70000271B0 /* Debug */,
+				378084BA2F58EE70000271B0 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		378084BB2F58EE70000271B0 /* Build configuration list for PBXNativeTarget "SimpleNews Watch Watch AppTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				378084BC2F58EE70000271B0 /* Debug */,
+				378084BD2F58EE70000271B0 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		378084BE2F58EE70000271B0 /* Build configuration list for PBXNativeTarget "SimpleNews Watch Watch AppUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				378084BF2F58EE70000271B0 /* Debug */,
+				378084C02F58EE70000271B0 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		37DCBD7D2D4F21FE00F87CB6 /* Build configuration list for PBXProject "SimpleNews" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

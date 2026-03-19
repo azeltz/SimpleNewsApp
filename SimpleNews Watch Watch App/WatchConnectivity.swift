@@ -41,19 +41,27 @@ final class WatchSessionManager: NSObject, WCSessionDelegate {
         }
 
         // Send command to iPhone
-        let message: [String: Any] = [
+        var message: [String: Any] = [
             "action": "toggleSaved",
             "id": headline.id,
             "title": headline.title,
             "source": headline.source ?? "",
             "urlString": headline.urlString ?? "",
+            "description": headline.description ?? "",
             "isSaved": newSaved
         ]
+        if let date = headline.publishedAt {
+            message["publishedAt"] = date.timeIntervalSince1970
+        }
 
         let session = WCSession.default
         if session.isReachable {
-            session.sendMessage(message, replyHandler: nil) { error in
-                print("Watch: failed to send toggleSaved: \(error.localizedDescription)")
+            session.sendMessage(message, replyHandler: { _ in
+                // iPhone confirmed receipt
+            }) { error in
+                // sendMessage failed, falling back to transferUserInfo
+                // Fall back to guaranteed delivery
+                session.transferUserInfo(message)
             }
         } else {
             // Fall back to transferUserInfo for delivery when iPhone becomes reachable
@@ -65,26 +73,35 @@ final class WatchSessionManager: NSObject, WCSessionDelegate {
 
     func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
         if let error {
-            print("Watch WCSession activation error: \(error.localizedDescription)")
+            // WCSession activation error is expected in some environments
         }
     }
 
-    /// Receive updated saved IDs from iPhone via applicationContext.
+    /// Receive updated saved IDs, AI summary, and settings from iPhone via applicationContext.
     func session(_ session: WCSession, didReceiveApplicationContext applicationContext: [String: Any]) {
-        guard let ids = applicationContext["savedIDs"] as? [String] else { return }
-        Task { @MainActor in
-            viewModel?.savedIDs = Set(ids)
-            viewModel?.refreshSavedFlags()
-        }
+        applyContext(applicationContext)
     }
 
     /// Also handle applicationContext on activation (for initial sync).
     func sessionReachabilityDidChange(_ session: WCSession) {
-        // Check if there's a pending context with saved IDs
-        if let ids = session.receivedApplicationContext["savedIDs"] as? [String] {
-            Task { @MainActor in
+        applyContext(session.receivedApplicationContext)
+    }
+
+    private func applyContext(_ context: [String: Any]) {
+        let ids = context["savedIDs"] as? [String]
+        let summary = context["aiSummary"] as? String
+        let enableAISummary = context["enableAISummary"] as? Bool ?? true
+        let userId = context["userId"] as? String
+
+        Task { @MainActor in
+            if let ids {
                 viewModel?.savedIDs = Set(ids)
                 viewModel?.refreshSavedFlags()
+            }
+            viewModel?.aiSummary = summary
+            viewModel?.enableAISummary = enableAISummary
+            if let userId {
+                viewModel?.userId = userId
             }
         }
     }

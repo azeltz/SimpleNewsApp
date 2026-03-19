@@ -128,11 +128,24 @@ struct SimpleNewsComplicationProvider: TimelineProvider {
     }
 }
 
-private struct ComplicationArticlesResponse: Codable {
+private struct ComplicationArticlesResponse: Codable, Sendable {
+    nonisolated init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.articles = try container.decode([ComplicationArticleDTO].self, forKey: .articles)
+    }
+
     let articles: [ComplicationArticleDTO]
 }
 
-private struct ComplicationArticleDTO: Codable {
+private struct ComplicationArticleDTO: Codable, Sendable {
+    nonisolated init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = try container.decodeIfPresent(String.self, forKey: .id)
+        self.title = try container.decodeIfPresent(String.self, forKey: .title)
+        self.source = try container.decodeIfPresent(String.self, forKey: .source)
+        self.publishedAt = try container.decodeIfPresent(String.self, forKey: .publishedAt)
+    }
+
     let id: String?
     let title: String?
     let source: String?
@@ -148,23 +161,21 @@ struct SimpleNewsComplicationView: View {
     @Environment(\.widgetFamily) var family
 
     var body: some View {
-        switch family {
-        case .accessoryCircular:
-            // Launcher: icon-only, tap opens main articles list
-            circularView
-        case .accessoryCorner:
-            // Corner: small icon with date
-            cornerView
-        case .accessoryRectangular:
-            // Top Headline or Daily Summary text
-            rectangularView
-        case .accessoryInline:
-            // Single line of text
-            inlineView
-        default:
-            // Fallback for any other family
-            circularView
+        Group {
+            switch family {
+            case .accessoryCircular:
+                circularView
+            case .accessoryCorner:
+                cornerView
+            case .accessoryRectangular:
+                rectangularView
+            case .accessoryInline:
+                inlineView
+            default:
+                circularView
+            }
         }
+        .privacySensitive(false)
     }
 
     // MARK: - Circular (Launcher)
@@ -175,29 +186,28 @@ struct SimpleNewsComplicationView: View {
             AccessoryWidgetBackground()
             Image(systemName: "newspaper.fill")
                 .font(.title3)
-                .foregroundStyle(.blue)
+                .widgetAccentable()
         }
         .widgetURL(URL(string: "simplenews://home"))
     }
 
     // MARK: - Corner (Date + Icon)
 
-    /// Small icon/monogram plus today's date.
+    /// Small icon/monogram in the corner slot.
+    /// Uses widgetLabel for the outer curved text area.
     /// Tap opens the main articles list.
     private var cornerView: some View {
-        ZStack {
-            AccessoryWidgetBackground()
-            VStack(spacing: 0) {
-                Text(dayNumber)
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
-                Text(weekdayAbbrev)
-                    .font(.system(size: 8, weight: .semibold))
-                    .textCase(.uppercase)
-                    .foregroundStyle(.secondary)
+        Image(systemName: "newspaper.fill")
+            .font(.title3)
+            .widgetAccentable()
+            .widgetLabel {
+                if entry.newArticleCount > 0 {
+                    Text("\(entry.newArticleCount) new")
+                } else {
+                    Text("News")
+                }
             }
-        }
-        // Tap opens main list
-        .widgetURL(URL(string: "simplenews://home"))
+            .widgetURL(URL(string: "simplenews://home"))
     }
 
     // MARK: - Rectangular (Top Headline / Daily Summary)
@@ -211,7 +221,7 @@ struct SimpleNewsComplicationView: View {
                 HStack(spacing: 4) {
                     Image(systemName: "newspaper.fill")
                         .font(.caption2)
-                        .foregroundStyle(.blue)
+                        .widgetAccentable()
                     Text("SimpleNews")
                         .font(.caption2)
                         .fontWeight(.semibold)

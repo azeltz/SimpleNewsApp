@@ -106,7 +106,7 @@ struct AddSourceView: View {
             kindToSend = selectedKind
         }
 
-        let workerURL = URL(string: "https://rss-aggregator.simplenews.workers.dev/feeds")!
+        let workerURL = simpleNewsBackendBaseURL.appendingPathComponent("feeds")
         var request = URLRequest(url: workerURL)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")

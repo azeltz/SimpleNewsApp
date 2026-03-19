@@ -78,29 +78,36 @@ struct ArticleDetailView: View {
     @Binding var article: Article
     let showImages: Bool
     let enableInLineView: Bool
+    let hideArticleBodyImages: Bool
+    let includeImageInExport: Bool
+    let enableRichLinkPreviews: Bool
     let onToggleSaved: () -> Void
+    var onImageDiscovered: ((String, URL) -> Void)? = nil
 
     @State private var showSafari: Bool = false
-    @State private var isSaved: Bool
     @StateObject private var readerLoader = ReaderLoader()
     @StateObject private var readerController = ReaderController()
     @State private var readerHeight: CGFloat = 0
     @State private var showShareSheet: Bool = false
     @State private var cachedShareBody: String = ""
+    @State private var cachedHeroImage: UIImage? = nil
+    @State private var isPreparingShare: Bool = false
+    @State private var oEmbedHTML: String?
 
     @Environment(\.openURL) private var openURL
 
-    init(
-        article: Binding<Article>,
-        showImages: Bool,
-        enableInLineView: Bool,
-        onToggleSaved: @escaping () -> Void
-    ) {
-        self._article = article
-        self.showImages = showImages
-        self.enableInLineView = enableInLineView
-        self.onToggleSaved = onToggleSaved
-        _isSaved = State(initialValue: article.wrappedValue.isSaved)
+    /// Derived from the binding so it always stays in sync.
+    private var isSaved: Bool { article.isSaved }
+
+    /// The article's hero/cover image URL used for deduplication.
+    private var heroImageURL: URL? {
+        article.imageURL ?? article.readerImageURL
+    }
+
+    /// Persistent data store for the article's domain if the user is logged in.
+    private var subscriptionDataStore: WKWebsiteDataStore? {
+        guard let host = article.url?.host else { return nil }
+        return SubscriptionStore.shared.dataStoreForDomain(host)
     }
 
     // MARK: - Helpers
@@ -194,6 +201,11 @@ struct ArticleDetailView: View {
             items.append(url)
         }
 
+        // Include the hero image for export activities when enabled
+        if includeImageInExport, let hero = cachedHeroImage {
+            items.append(hero)
+        }
+
         items.append(cachedShareBody)
         items.append(article.title)
 
@@ -230,17 +242,12 @@ struct ArticleDetailView: View {
                             switch phase {
                             case .empty:
                                 Color.gray.opacity(0.1)
-
                             case .success(let image):
                                 image
                                     .resizable()
                                     .scaledToFill()
-                                    .frame(width: UIScreen.main.bounds.width - 32, height: 220)
-                                    .clipped()
-
                             case .failure:
                                 Color.gray.opacity(0.1)
-
                             @unknown default:
                                 Color.gray.opacity(0.1)
                             }
@@ -298,6 +305,12 @@ struct ArticleDetailView: View {
                 }
 
                 if let url = article.url {
+                    // oEmbed rich preview (shown inline when available)
+                    if let embedHTML = oEmbedHTML {
+                        Divider()
+                        OEmbedWebView(embedHTML: embedHTML)
+                    }
+
                     Divider()
 
                     VStack(alignment: .leading, spacing: 8) {
@@ -322,21 +335,40 @@ struct ArticleDetailView: View {
                         .tint(Color.blue)
                     }
 
-                    if enableInLineView {
+                    // Skip inline reader when oEmbed is already shown
+                    if enableInLineView && oEmbedHTML == nil {
                         if let html = readerLoader.readerHTML {
-                            ReaderHTMLView(
+                            let cleanHTML = HTMLImageCleaner.cleaned(
                                 html: html,
+                                heroURL: heroImageURL,
+                                hideAllImages: hideArticleBodyImages
+                            )
+                            ReaderHTMLView(
+                                html: cleanHTML,
                                 height: $readerHeight,
                                 controller: readerController,
+                                subscriptionDataStore: subscriptionDataStore,
                                 onImageFound: { url in
                                     if article.imageURL == nil {
                                         article.readerImageURL = url
+                                        onImageDiscovered?(article.id, url)
                                     }
                                 }
                             )
                             .frame(height: readerHeight)
                         } else if readerLoader.isLoading {
                             ProgressView("Loading article…")
+                        } else if readerLoader.extractionFailed {
+                            // Readability failed (JS-rendered sites like Ynet).
+                            // Show feed text and prompt to open in browser.
+                            VStack(alignment: .leading, spacing: 10) {
+                                Label("Inline reader not available", systemImage: "doc.text.magnifyingglass")
+                                    .font(.footnote)
+                                    .foregroundColor(.secondary)
+                                Text("This article's content could not be extracted. Use the buttons above to read the full article in Safari.")
+                                    .font(.footnote)
+                                    .foregroundColor(.secondary)
+                            }
                         } else if let error = readerLoader.error {
                             Text(error)
                                 .font(.footnote)
@@ -362,8 +394,7 @@ struct ArticleDetailView: View {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button {
                     onToggleSaved()
-                    isSaved.toggle()
-                    article.isSaved = isSaved
+                    article.isSaved.toggle()
                 } label: {
                     Image(systemName: isSaved ? "bookmark.fill" : "bookmark")
                 }
@@ -371,10 +402,23 @@ struct ArticleDetailView: View {
 
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button {
-                    showShareSheet = true
+                    Task {
+                        // Ensure hero image is downloaded before showing the share sheet
+                        if includeImageInExport && cachedHeroImage == nil, let hero = heroImageURL {
+                            isPreparingShare = true
+                            cachedHeroImage = await downloadImage(from: hero)
+                            isPreparingShare = false
+                        }
+                        showShareSheet = true
+                    }
                 } label: {
-                    Image(systemName: "square.and.arrow.up")
+                    if isPreparingShare {
+                        ProgressView()
+                    } else {
+                        Image(systemName: "square.and.arrow.up")
+                    }
                 }
+                .disabled(isPreparingShare)
             }
         }
         .tint(.blue)
@@ -388,14 +432,25 @@ struct ArticleDetailView: View {
             }
         }
         .task {
-            if enableInLineView, let baseURL = article.url {
+            // Try oEmbed first when rich link previews are enabled
+            if enableRichLinkPreviews, let baseURL = article.url {
                 let resolved = unwrapGoogleNewsRedirect(baseURL) ?? baseURL
-                print("Inline reader loading:", resolved.absoluteString)
+                oEmbedHTML = await OEmbedService.fetchHTML(for: resolved)
+            }
+
+            // Only load the full reader if oEmbed didn't produce a result
+            if oEmbedHTML == nil, enableInLineView, let baseURL = article.url {
+                let resolved = unwrapGoogleNewsRedirect(baseURL) ?? baseURL
+                readerLoader.hideFirstImage = showImages
                 await readerLoader.load(from: resolved)
             }
 
-            //cachedShareBody = bodyText(for: article) ?? ""
             cachedShareBody = exportBodyText(for: article)
+
+            // Pre-download hero image for exports
+            if includeImageInExport, let hero = heroImageURL {
+                cachedHeroImage = await downloadImage(from: hero)
+            }
         }
     }
 
@@ -433,7 +488,7 @@ struct ArticleDetailView: View {
 
         webView.evaluateJavaScript(injectCSS) { _, error in
             if let error {
-                print("withTemporaryLightMode: failed to inject CSS:", error)
+                Log.export.error("withTemporaryLightMode: failed to inject CSS: \(error)")
             }
 
             completion()
@@ -459,8 +514,25 @@ struct ArticleDetailView: View {
             readerController.isLoaded,
             let webView = readerController.webView
         else {
-            print("exportAsPDF: reader not ready")
+            Log.export.warning("exportAsPDF: reader not ready")
             return
+        }
+
+        // Build JS that inserts an optional hero image + title at the top
+        let heroJS: String
+        if includeImageInExport, let hero = heroImageURL {
+            heroJS = """
+            var heroImg = document.createElement('img');
+            heroImg.src = \(jsonEscape(hero.absoluteString));
+            heroImg.style.maxWidth = '100%';
+            heroImg.style.height = 'auto';
+            heroImg.style.display = 'block';
+            heroImg.style.marginBottom = '12px';
+            heroImg.style.borderRadius = '8px';
+            document.body.insertBefore(heroImg, document.body.firstChild);
+            """
+        } else {
+            heroJS = ""
         }
 
         let injectTitle = """
@@ -471,6 +543,7 @@ struct ArticleDetailView: View {
             titleDiv.style.marginBottom = '16px';
             titleDiv.innerText = \(jsonEscape(article.title));
             document.body.insertBefore(titleDiv, document.body.firstChild);
+            \(heroJS)
         })();
         """
 
@@ -481,7 +554,7 @@ struct ArticleDetailView: View {
         withTemporaryLightMode(on: webView) {
             webView.evaluateJavaScript(injectTitle) { _, error in
                 if let error {
-                    print("exportAsPDF: failed to inject title:", error)
+                    Log.export.error("exportAsPDF: failed to inject title: \(error)")
                 }
 
                 webView.createPDF(configuration: pdfConfig) { result in
@@ -493,10 +566,10 @@ struct ArticleDetailView: View {
                             try data.write(to: url)
                             presentShareSheet(for: [url])
                         } catch {
-                            print("exportAsPDF: failed to write PDF:", error)
+                            Log.export.error("exportAsPDF: failed to write PDF: \(error)")
                         }
                     case .failure(let error):
-                        print("exportAsPDF: failed to create PDF:", error)
+                        Log.export.error("exportAsPDF: failed to create PDF: \(error)")
                     }
                 }
             }
@@ -523,13 +596,35 @@ struct ArticleDetailView: View {
         let body = clippedText(from: rawText, maxCharacters: 5000)
         let targetSize = CGSize(width: 1080, height: 1350)
 
-        let image = UIImage.imageForText(
-            title: article.title,
-            body: body,
-            targetSize: targetSize
-        )
+        if includeImageInExport, let hero = heroImageURL {
+            // Download the hero image and draw it at the top of the export
+            Task {
+                let heroImage = await downloadImage(from: hero)
+                let image = UIImage.imageForText(
+                    title: article.title,
+                    body: body,
+                    targetSize: targetSize,
+                    heroImage: heroImage
+                )
+                presentShareSheet(for: [image])
+            }
+        } else {
+            let image = UIImage.imageForText(
+                title: article.title,
+                body: body,
+                targetSize: targetSize
+            )
+            presentShareSheet(for: [image])
+        }
+    }
 
-        presentShareSheet(for: [image])
+    private func downloadImage(from url: URL) async -> UIImage? {
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            return UIImage(data: data)
+        } catch {
+            return nil
+        }
     }
 }
 
@@ -539,10 +634,35 @@ extension UIImage {
         body: String,
         targetSize: CGSize,
         minFont: CGFloat = 10,
-        maxFont: CGFloat = 32
+        maxFont: CGFloat = 32,
+        heroImage: UIImage? = nil
     ) -> UIImage {
 
         let inset: CGFloat = 24
+        let contentWidth = targetSize.width - inset * 2
+        let heroGap: CGFloat = 16
+
+        // Hero image: top-right corner, correct aspect ratio
+        var heroRect: CGRect = .zero
+        var heroBottomY: CGFloat = inset
+        if let hero = heroImage {
+            let maxW = contentWidth * 0.35
+            let maxH: CGFloat = 300
+            let aspect = hero.size.width / max(hero.size.height, 1)
+            var drawW = maxW
+            var drawH = drawW / aspect
+            if drawH > maxH {
+                drawH = maxH
+                drawW = drawH * aspect
+            }
+            heroRect = CGRect(
+                x: targetSize.width - inset - drawW,
+                y: inset,
+                width: drawW,
+                height: drawH
+            )
+            heroBottomY = heroRect.maxY + heroGap
+        }
 
         let titleFont = UIFont.boldSystemFont(ofSize: 50)
         let titleParagraph = NSMutableParagraphStyle()
@@ -555,14 +675,11 @@ extension UIImage {
             .foregroundColor: UIColor.black
         ]
 
-        let titleRect = CGRect(
-            x: inset,
-            y: inset,
-            width: targetSize.width - inset * 2,
-            height: targetSize.height
-        )
+        // Title width narrows when beside hero
+        let titleWidth = heroRect == .zero ? contentWidth : contentWidth - heroRect.width - heroGap
+
         let titleBounding = (title as NSString).boundingRect(
-            with: CGSize(width: titleRect.width, height: .greatestFiniteMagnitude),
+            with: CGSize(width: titleWidth, height: .greatestFiniteMagnitude),
             options: [.usesLineFragmentOrigin],
             attributes: titleAttrs,
             context: nil
@@ -570,70 +687,102 @@ extension UIImage {
 
         let titleHeight = titleBounding.height
         let spacing: CGFloat = 16
+        let bodyTopY = inset + titleHeight + spacing
+        let bodyMaxHeight = targetSize.height - bodyTopY - inset
 
-        let bodyMaxHeight = targetSize.height - inset - titleHeight - spacing - inset
-
-        let bodyParagraph = NSMutableParagraphStyle()
-        bodyParagraph.alignment = .left
-        bodyParagraph.lineBreakMode = .byWordWrapping
-
-        var low = minFont
-        var high = maxFont
-        var bestFont = minFont
-
-        while high - low > 0.5 {
-            let mid = (low + high) / 2
-            let attrs: [NSAttributedString.Key: Any] = [
-                .font: UIFont.systemFont(ofSize: mid),
-                .paragraphStyle: bodyParagraph
-            ]
-            let bounding = (body as NSString).boundingRect(
-                with: CGSize(width: titleRect.width, height: .greatestFiniteMagnitude),
-                options: [.usesLineFragmentOrigin],
-                attributes: attrs,
-                context: nil
-            )
-
-            if bounding.height <= bodyMaxHeight {
-                bestFont = mid
-                low = mid
-            } else {
-                high = mid
-            }
-        }
-
-        let bodyAttrs: [NSAttributedString.Key: Any] = [
-            .font: UIFont.systemFont(ofSize: bestFont),
-            .paragraphStyle: bodyParagraph,
-            .foregroundColor: UIColor.black
-        ]
+        let bodyFont = UIFont.systemFont(ofSize: 18)
 
         let renderer = UIGraphicsImageRenderer(size: targetSize)
         return renderer.image { _ in
             UIColor.white.setFill()
             UIBezierPath(rect: CGRect(origin: .zero, size: targetSize)).fill()
 
+            // Draw hero image
+            if let hero = heroImage {
+                hero.draw(in: heroRect)
+            }
+
+            // Draw title
+            let titleDrawRect = CGRect(
+                x: inset,
+                y: inset,
+                width: titleWidth,
+                height: ceil(titleHeight)
+            )
             (title as NSString).draw(
-                with: titleRect,
+                with: titleDrawRect,
                 options: [.usesLineFragmentOrigin],
                 attributes: titleAttrs,
                 context: nil
             )
 
-            let bodyY = inset + titleHeight + spacing
-            let bodyRect = CGRect(
-                x: inset,
-                y: bodyY,
-                width: targetSize.width - inset * 2,
-                height: bodyMaxHeight
+            // Draw body with Core Text wrapping around hero
+            let bodyAttr = NSAttributedString(
+                string: body,
+                attributes: [
+                    .font: bodyFont,
+                    .foregroundColor: UIColor.black
+                ]
             )
 
-            (body as NSString).draw(
-                with: bodyRect,
-                options: [.usesLineFragmentOrigin],
-                attributes: bodyAttrs,
-                context: nil
+            guard bodyMaxHeight > 0 else { return }
+
+            let fullBodyRect = CGRect(x: inset, y: bodyTopY, width: contentWidth, height: bodyMaxHeight)
+
+            let ctx = UIGraphicsGetCurrentContext()!
+            ctx.saveGState()
+            ctx.textMatrix = .identity
+            ctx.translateBy(x: 0, y: targetSize.height)
+            ctx.scaleBy(x: 1, y: -1)
+
+            // CT flipped body rect
+            let ctBodyRect = CGRect(
+                x: fullBodyRect.minX,
+                y: targetSize.height - fullBodyRect.maxY,
+                width: fullBodyRect.width,
+                height: fullBodyRect.height
             )
+
+            let framePath = CGMutablePath()
+            framePath.addRect(ctBodyRect)
+
+            // Exclusion for hero image if it extends into the body area
+            if heroRect != .zero && bodyTopY < heroBottomY {
+                let exclUIKit = CGRect(
+                    x: heroRect.minX - heroGap,
+                    y: bodyTopY,
+                    width: heroRect.width + heroGap,
+                    height: heroBottomY - bodyTopY
+                )
+                let exclCT = CGRect(
+                    x: exclUIKit.minX,
+                    y: targetSize.height - exclUIKit.maxY,
+                    width: exclUIKit.width,
+                    height: exclUIKit.height
+                )
+                framePath.addRect(exclCT)
+            }
+
+            let framesetter = CTFramesetterCreateWithAttributedString(bodyAttr)
+            let frame = CTFramesetterCreateFrame(framesetter, CFRange(location: 0, length: 0), framePath, nil)
+            CTFrameDraw(frame, ctx)
+            ctx.restoreGState()
         }
     }
 }
+
+#if DEBUG
+#Preview("Article Detail") {
+    PreviewWrapper {
+        ArticleDetailView(
+            article: .constant(PreviewData.sampleArticle),
+            showImages: true,
+            enableInLineView: true,
+            hideArticleBodyImages: false,
+            includeImageInExport: true,
+            enableRichLinkPreviews: true,
+            onToggleSaved: {}
+        )
+    }
+}
+#endif
