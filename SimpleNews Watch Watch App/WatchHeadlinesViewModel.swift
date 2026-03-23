@@ -76,9 +76,10 @@ final class WatchHeadlinesViewModel: ObservableObject {
             dateFormatterAlt.timeZone = TimeZone(secondsFromGMT: 0)
             dateFormatterAlt.dateFormat = "EEE, d MMM yyyy HH:mm:ss zzz"
 
+            let now = Date()
             headlines = articlesResponse.articles.prefix(20).compactMap { article in
                 guard let title = article.title, !title.isEmpty else { return nil }
-                let date: Date? = article.publishedAt.flatMap { raw in
+                var date: Date? = article.publishedAt.flatMap { raw in
                     var str = raw
                     if str.hasPrefix("<![CDATA[") && str.hasSuffix("]]>") {
                         str = String(str.dropFirst(9).dropLast(3))
@@ -86,6 +87,20 @@ final class WatchHeadlinesViewModel: ObservableObject {
                     }
                     return dateFormatter.date(from: str) ?? dateFormatterAlt.date(from: str)
                 }
+
+                // Fix future dates — feeds often mislabel EDT as EST (off by 1 hour).
+                // If the date is in the future but within 1 hour, shift it back by
+                // 1 hour so the article keeps its real relative ordering instead of
+                // all appearing as "now".
+                if let d = date, d > now {
+                    let drift = d.timeIntervalSince(now)
+                    if drift <= 3600 {
+                        date = d.addingTimeInterval(-3600)
+                    } else {
+                        date = now
+                    }
+                }
+
                 let id = article.id ?? UUID().uuidString
                 return WatchHeadline(
                     id: id,
