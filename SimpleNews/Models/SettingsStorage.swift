@@ -26,5 +26,10 @@ extension AppSettings {
         if let data = try? JSONEncoder().encode(self) {
             UserDefaults.standard.set(data, forKey: settingsKey)
         }
+        // Sync blocked tags to the shared App Group container so the
+        // widget and complication can filter articles.
+        if let shared = UserDefaults(suiteName: "group.com.simplenews.shared") {
+            shared.set(blockedTags, forKey: "blockedTags")
+        }
     }
 }

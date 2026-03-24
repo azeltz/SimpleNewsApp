@@ -123,10 +123,12 @@ Articles are re-scored after the background tagging pass completes.
 
 ### Timestamp Correction
 
-Both the iOS and watchOS clients apply the same fix for feeds that mislabel EDT as EST:
+All four targets (iOS app, watchOS app, widget, complication) apply the same fix for feeds that mislabel EDT as EST:
 
 - If a parsed date is in the future by <= 1 hour: shift back 1 hour
 - If in the future by > 1 hour: clamp to `now`
+
+This is implemented identically in `RSSBackendClient`, `WatchHeadlinesViewModel`, `HeadlineTimelineProvider`, and `SimpleNewsComplicationProvider`.
 
 ---
 
@@ -201,6 +203,7 @@ classDiagram
 | `UserIdManager` | Keychain | `com.simplenews.userId` | Persistent device UUID |
 | `UsageTracker` | UserDefaults | `usageTrackerDays` | Per-screen daily time tracking |
 | `SubscriptionStore` | WKWebsiteDataStore | Per-domain cookie jars | Paywall login sessions |
+| Blocked Tags (shared) | App Group UserDefaults | `group.com.simplenews.shared` → `blockedTags` | Widget/complication tag filtering |
 
 ---
 
@@ -361,6 +364,44 @@ Communication uses `sendMessage` when reachable (instant) with `transferUserInfo
 
 ---
 
+## Widget & Complication Architecture
+
+### Data Processing Pipeline
+
+Both the widget and complication fetch articles from the same backend endpoint and apply a shared processing pipeline before display:
+
+```mermaid
+graph TD
+    Fetch["GET /api/news"] --> Parse["Parse JSON articles"]
+    Parse --> Blocked["Filter blocked tags (App Group)"]
+    Blocked --> Timestamps["Fix future timestamps (EDT/EST)"]
+    Timestamps --> Dedup["Deduplicate by title (widget only)"]
+    Dedup --> Sort["Sort by date (newest first)"]
+    Sort --> Truncate["Summarize headlines to fit"]
+    Truncate --> Display["Render in widget family"]
+```
+
+### Blocked Tag Sharing
+
+The main app writes `blockedTags` to the shared App Group container (`group.com.simplenews.shared`) whenever settings are saved. The widget and complication read from this shared container to filter articles by category, keeping the feed consistent with the iOS app's Home view.
+
+### Complication Family Layouts
+
+| Family | Content | Character Budget |
+|--------|---------|-----------------|
+| `accessoryCorner` | Icon body + curved headline in `widgetLabel` | ~25 chars |
+| `accessoryInline` | Single-line headline via `ViewThatFits` | ~40 chars |
+| `accessoryRectangular` | Header + 2-line headline + source | ~60 chars |
+| `accessoryCircular` | Newspaper icon launcher (no text) | N/A |
+
+Headlines are truncated at word boundaries with an ellipsis when they exceed the budget.
+
+### Widget Deduplication
+
+The iOS widget deduplicates articles by normalized (lowercased, trimmed) title before selecting the top 5 headlines. This prevents the same story from multiple sources appearing as separate entries.
+
+---
+
 ## Background Processing
 
 ```mermaid
@@ -404,3 +445,7 @@ All other functionality uses Apple frameworks: SwiftUI, WebKit, CoreML, NaturalL
 5. **Rate-limited refresh**: `refreshIfAllowed()` enforces a 10-minute cooldown between fetches unless explicitly overridden.
 
 6. **Structured logging**: All diagnostic output uses `os.Logger` with categorized subsystems (network, data, ui, tagging, export, watch, notifications, background). Debug-level messages are excluded from on-disk logs in release builds.
+
+7. **App Group for cross-target settings**: Blocked tags are synced from the main app to a shared App Group container (`group.com.simplenews.shared`) so the widget and complication can filter articles without duplicating the full settings stack. Only the minimal data needed (blocked tags array) is shared.
+
+8. **Consistent timestamp correction**: The EDT/EST future-date fix is applied identically across all four targets to prevent feed ordering inconsistencies between the app, watch, widget, and complications.

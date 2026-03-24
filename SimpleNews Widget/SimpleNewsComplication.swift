@@ -73,6 +73,13 @@ struct SimpleNewsComplicationProvider: TimelineProvider {
         var request = URLRequest(url: url)
         request.timeoutInterval = 10
 
+        // Load blocked tags from the shared App Group container
+        let blockedTags: Set<String> = {
+            guard let shared = UserDefaults(suiteName: "group.com.simplenews.shared"),
+                  let tags = shared.stringArray(forKey: "blockedTags") else { return [] }
+            return Set(tags.map { $0.lowercased() })
+        }()
+
         URLSession.shared.dataTask(with: request) { data, response, error in
             guard
                 let data = data,
@@ -92,25 +99,59 @@ struct SimpleNewsComplicationProvider: TimelineProvider {
 
             do {
                 let decoded = try JSONDecoder().decode(ComplicationArticlesResponse.self, from: data)
-                let first = decoded.articles.first(where: { $0.title != nil && !($0.title?.isEmpty ?? true) })
 
-                // Count articles published since midnight (local time)
-                let startOfDay = Calendar.current.startOfDay(for: Date())
                 let dateFormatter = DateFormatter()
                 dateFormatter.locale = Locale(identifier: "en_US_POSIX")
                 dateFormatter.timeZone = TimeZone(secondsFromGMT: 0)
                 dateFormatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss Z"
 
-                let newCount = decoded.articles.compactMap { article -> Date? in
-                    guard let raw = article.publishedAt else { return nil }
-                    return dateFormatter.date(from: raw)
-                }.filter { $0 >= startOfDay }.count
+                let dateFormatterAlt = DateFormatter()
+                dateFormatterAlt.locale = Locale(identifier: "en_US_POSIX")
+                dateFormatterAlt.timeZone = TimeZone(secondsFromGMT: 0)
+                dateFormatterAlt.dateFormat = "EEE, d MMM yyyy HH:mm:ss zzz"
+
+                let now = Date()
+                let startOfDay = Calendar.current.startOfDay(for: now)
+
+                // Parse dates with the future-date fix, filter blocked tags
+                let articlesWithDates: [(ComplicationArticleDTO, Date?)] = decoded.articles.compactMap { article in
+                    // Filter out articles matching blocked tags
+                    if let category = article.category?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased(),
+                       !category.isEmpty,
+                       blockedTags.contains(category) {
+                        return nil
+                    }
+
+                    var date: Date? = article.publishedAt.flatMap { raw in
+                        var str = raw
+                        if str.hasPrefix("<![CDATA[") && str.hasSuffix("]]>") {
+                            str = String(str.dropFirst(9).dropLast(3))
+                                .trimmingCharacters(in: .whitespacesAndNewlines)
+                        }
+                        return dateFormatter.date(from: str) ?? dateFormatterAlt.date(from: str)
+                    }
+
+                    // Fix future dates (EDT/EST mislabeling)
+                    if let d = date, d > now {
+                        let drift = d.timeIntervalSince(now)
+                        if drift <= 3600 {
+                            date = d.addingTimeInterval(-3600)
+                        } else {
+                            date = now
+                        }
+                    }
+
+                    return (article, date)
+                }
+
+                let first = articlesWithDates.first(where: { $0.0.title != nil && !($0.0.title?.isEmpty ?? true) })
+                let newCount = articlesWithDates.compactMap { $0.1 }.filter { $0 >= startOfDay }.count
 
                 completion(ComplicationEntry(
                     date: Date(),
-                    topHeadlineTitle: first?.title,
-                    topHeadlineSource: first?.source,
-                    topHeadlineID: first?.id,
+                    topHeadlineTitle: first?.0.title,
+                    topHeadlineSource: first?.0.source,
+                    topHeadlineID: first?.0.id,
                     newArticleCount: newCount,
                     isPlaceholder: false
                 ))
@@ -144,12 +185,14 @@ private struct ComplicationArticleDTO: Codable, Sendable {
         self.title = try container.decodeIfPresent(String.self, forKey: .title)
         self.source = try container.decodeIfPresent(String.self, forKey: .source)
         self.publishedAt = try container.decodeIfPresent(String.self, forKey: .publishedAt)
+        self.category = try container.decodeIfPresent(String.self, forKey: .category)
     }
 
     let id: String?
     let title: String?
     let source: String?
     let publishedAt: String?
+    let category: String?
 }
 
 // MARK: - Complication Views
@@ -191,23 +234,22 @@ struct SimpleNewsComplicationView: View {
         .widgetURL(URL(string: "simplenews://home"))
     }
 
-    // MARK: - Corner (Date + Icon)
+    // MARK: - Corner (Icon + Headline)
 
-    /// Small icon/monogram in the corner slot.
-    /// Uses widgetLabel for the outer curved text area.
-    /// Tap opens the main articles list.
+    /// Small icon in the corner slot with headline text curving around the watch face.
+    /// The `widgetLabel` renders as the curved outer text.
     private var cornerView: some View {
         Image(systemName: "newspaper.fill")
             .font(.title3)
             .widgetAccentable()
             .widgetLabel {
-                if entry.newArticleCount > 0 {
-                    Text("\(entry.newArticleCount) new")
+                if let title = entry.topHeadlineTitle {
+                    Text(summarize(title, maxLength: 25))
                 } else {
-                    Text("News")
+                    Text("No headlines")
                 }
             }
-            .widgetURL(URL(string: "simplenews://home"))
+            .widgetURL(complicationDeepLink)
     }
 
     // MARK: - Rectangular (Top Headline / Daily Summary)
@@ -227,7 +269,7 @@ struct SimpleNewsComplicationView: View {
                         .fontWeight(.semibold)
                         .foregroundStyle(.secondary)
                 }
-                Text(title)
+                Text(summarize(title, maxLength: 60))
                     .font(.caption)
                     .fontWeight(.medium)
                     .lineLimit(2)
@@ -263,11 +305,11 @@ struct SimpleNewsComplicationView: View {
 
     // MARK: - Inline
 
-    /// Single line: truncated headline title or "SimpleNews · N new"
+    /// Single line: summarized headline or "SimpleNews · N new"
     private var inlineView: some View {
-        Group {
+        ViewThatFits {
             if let title = entry.topHeadlineTitle {
-                Text(title)
+                Text(summarize(title, maxLength: 40))
             } else if entry.newArticleCount > 0 {
                 Text("SimpleNews · \(entry.newArticleCount) new")
             } else {
@@ -278,6 +320,22 @@ struct SimpleNewsComplicationView: View {
     }
 
     // MARK: - Helpers
+
+    /// Truncates a headline to fit within a character limit, breaking at word
+    /// boundaries and appending an ellipsis when shortened.
+    private func summarize(_ text: String, maxLength: Int) -> String {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.count > maxLength else { return trimmed }
+
+        // Find the last space before the limit (leave room for ellipsis)
+        let cutoff = trimmed.index(trimmed.startIndex, offsetBy: maxLength - 1)
+        let substring = trimmed[trimmed.startIndex..<cutoff]
+        if let lastSpace = substring.lastIndex(of: " ") {
+            return String(trimmed[trimmed.startIndex..<lastSpace]) + "…"
+        }
+        // No space found — hard cut
+        return String(substring) + "…"
+    }
 
     /// Deep link: article detail if we have a headline ID, otherwise summary
     private var complicationDeepLink: URL {
@@ -340,9 +398,9 @@ struct SimpleNewsComplication: Widget {
 } timeline: {
     ComplicationEntry(
         date: Date(),
-        topHeadlineTitle: nil,
-        topHeadlineSource: nil,
-        topHeadlineID: nil,
+        topHeadlineTitle: "NASA's Artemis III Mission Set to Land Astronauts on the Moon",
+        topHeadlineSource: "NASA News",
+        topHeadlineID: "artemis-3",
         newArticleCount: 5,
         isPlaceholder: false
     )

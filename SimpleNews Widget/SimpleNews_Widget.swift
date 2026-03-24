@@ -16,6 +16,7 @@ struct WidgetArticleDTO: Codable {
     let source: String?
     let publishedAt: String?
     let imageURL: String?
+    let category: String?
 }
 
 struct WidgetArticlesResponse: Codable {
@@ -76,6 +77,13 @@ struct HeadlineTimelineProvider: TimelineProvider {
         var request = URLRequest(url: url)
         request.timeoutInterval = 15
 
+        // Load blocked tags from the shared App Group container
+        let blockedTags: Set<String> = {
+            guard let shared = UserDefaults(suiteName: "group.com.simplenews.shared"),
+                  let tags = shared.stringArray(forKey: "blockedTags") else { return [] }
+            return Set(tags.map { $0.lowercased() })
+        }()
+
         URLSession.shared.dataTask(with: request) { data, response, error in
             guard
                 let data = data,
@@ -88,12 +96,64 @@ struct HeadlineTimelineProvider: TimelineProvider {
 
             do {
                 let decoded = try JSONDecoder().decode(WidgetArticlesResponse.self, from: data)
+
+                // Date formatters for timestamp parsing
+                let dateFormatter = DateFormatter()
+                dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+                dateFormatter.timeZone = TimeZone(secondsFromGMT: 0)
+                dateFormatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss Z"
+
+                let dateFormatterAlt = DateFormatter()
+                dateFormatterAlt.locale = Locale(identifier: "en_US_POSIX")
+                dateFormatterAlt.timeZone = TimeZone(secondsFromGMT: 0)
+                dateFormatterAlt.dateFormat = "EEE, d MMM yyyy HH:mm:ss zzz"
+
+                let now = Date()
+                var seenTitles = Set<String>()
+
                 let items = decoded.articles
-                    .compactMap { dto -> HeadlineEntry.HeadlineItem? in
+                    .compactMap { dto -> (HeadlineEntry.HeadlineItem, Date?)? in
                         guard let id = dto.id, let title = dto.title, !title.isEmpty else { return nil }
-                        return HeadlineEntry.HeadlineItem(id: id, title: title, source: dto.source)
+
+                        // Filter out articles matching blocked tags
+                        if let category = dto.category?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased(),
+                           !category.isEmpty,
+                           blockedTags.contains(category) {
+                            return nil
+                        }
+
+                        // Deduplicate by normalized title
+                        let normalizedTitle = title.lowercased()
+                            .trimmingCharacters(in: .whitespacesAndNewlines)
+                        if seenTitles.contains(normalizedTitle) { return nil }
+                        seenTitles.insert(normalizedTitle)
+
+                        // Parse and fix timestamps
+                        var date: Date? = dto.publishedAt.flatMap { raw in
+                            var str = raw
+                            if str.hasPrefix("<![CDATA[") && str.hasSuffix("]]>") {
+                                str = String(str.dropFirst(9).dropLast(3))
+                                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                            }
+                            return dateFormatter.date(from: str) ?? dateFormatterAlt.date(from: str)
+                        }
+
+                        // Fix future dates (EDT/EST mislabeling)
+                        if let d = date, d > now {
+                            let drift = d.timeIntervalSince(now)
+                            if drift <= 3600 {
+                                date = d.addingTimeInterval(-3600)
+                            } else {
+                                date = now
+                            }
+                        }
+
+                        return (HeadlineEntry.HeadlineItem(id: id, title: title, source: dto.source), date)
                     }
+                    // Sort by date (newest first)
+                    .sorted { ($0.1 ?? .distantPast) > ($1.1 ?? .distantPast) }
                     .prefix(5)
+                    .map { $0.0 }
 
                 completion(HeadlineEntry(
                     date: Date(),
