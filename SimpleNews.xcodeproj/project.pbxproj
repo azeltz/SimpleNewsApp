@@ -16,6 +16,7 @@
 		37565EA22F452C700001F4D6 /* Readability in Frameworks */ = {isa = PBXBuildFile; productRef = 37565EA12F452C700001F4D6 /* Readability */; };
 		37565EA42F452C700001F4D6 /* ReadabilityUI in Frameworks */ = {isa = PBXBuildFile; productRef = 37565EA32F452C700001F4D6 /* ReadabilityUI */; };
 		378084B72F58EE70000271B0 /* SimpleNews Watch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 378084972F58EE6F000271B0 /* SimpleNews Watch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		378C916A2F70E66900CFB662 /* ARCHITECTURE.md in Resources */ = {isa = PBXBuildFile; fileRef = 378C91692F70E66900CFB662 /* ARCHITECTURE.md */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -114,6 +115,7 @@
 		378084972F58EE6F000271B0 /* SimpleNews Watch Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "SimpleNews Watch Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		378084A32F58EE70000271B0 /* SimpleNews Watch Watch AppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "SimpleNews Watch Watch AppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		378084AD2F58EE70000271B0 /* SimpleNews Watch Watch AppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "SimpleNews Watch Watch AppUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		378C91692F70E66900CFB662 /* ARCHITECTURE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = ARCHITECTURE.md; sourceTree = "<group>"; };
 		37DCBD822D4F21FE00F87CB6 /* SimpleNews.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SimpleNews.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		37DCBD952D4F220000F87CB6 /* SimpleNewsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SimpleNewsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		37DCBD9F2D4F220000F87CB6 /* SimpleNewsUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SimpleNewsUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -293,6 +295,7 @@
 				372D07D62F6B4EC1001439B9 /* SimpleNews Widget */,
 				37565EA02F452C700001F4D6 /* Frameworks */,
 				37DCBD832D4F21FE00F87CB6 /* Products */,
+				378C91692F70E66900CFB662 /* ARCHITECTURE.md */,
 			);
 			sourceTree = "<group>";
 		};
@@ -611,6 +614,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				378C916A2F70E66900CFB662 /* ARCHITECTURE.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
