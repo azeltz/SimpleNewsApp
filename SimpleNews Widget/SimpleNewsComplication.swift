@@ -206,8 +206,6 @@ struct SimpleNewsComplicationView: View {
     var body: some View {
         Group {
             switch family {
-            case .accessoryCircular:
-                circularView
             case .accessoryCorner:
                 cornerView
             case .accessoryRectangular:
@@ -215,23 +213,10 @@ struct SimpleNewsComplicationView: View {
             case .accessoryInline:
                 inlineView
             default:
-                circularView
+                cornerView
             }
         }
         .privacySensitive(false)
-    }
-
-    // MARK: - Circular (Launcher)
-
-    /// Icon-only launcher. Tap opens the watch app main articles list.
-    private var circularView: some View {
-        ZStack {
-            AccessoryWidgetBackground()
-            Image(systemName: "newspaper.fill")
-                .font(.title3)
-                .widgetAccentable()
-        }
-        .widgetURL(URL(string: "simplenews://home"))
     }
 
     // MARK: - Corner (Icon + Headline)
@@ -244,9 +229,9 @@ struct SimpleNewsComplicationView: View {
             .widgetAccentable()
             .widgetLabel {
                 if let title = entry.topHeadlineTitle {
-                    Text(summarize(title, maxLength: 25))
+                    Text(summarize(title, maxLength: 20))
                 } else {
-                    Text("No headlines")
+                    Text("SimpleNews")
                 }
             }
             .widgetURL(complicationDeepLink)
@@ -260,22 +245,20 @@ struct SimpleNewsComplicationView: View {
         VStack(alignment: .leading, spacing: 2) {
             if let title = entry.topHeadlineTitle {
                 // Top Headline mode
-                HStack(spacing: 4) {
+                HStack(spacing: 3) {
                     Image(systemName: "newspaper.fill")
-                        .font(.caption2)
+                        .font(.system(size: 8))
                         .widgetAccentable()
                     Text("SimpleNews")
-                        .font(.caption2)
-                        .fontWeight(.semibold)
+                        .font(.system(size: 9))
                         .foregroundStyle(.secondary)
                 }
-                Text(summarize(title, maxLength: 60))
-                    .font(.caption)
-                    .fontWeight(.medium)
+                Text(summarize(title, maxLength: 50))
+                    .font(.system(size: 13, weight: .semibold))
                     .lineLimit(2)
                 if let source = entry.topHeadlineSource {
                     Text(source)
-                        .font(.caption2)
+                        .font(.system(size: 9))
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
@@ -305,13 +288,11 @@ struct SimpleNewsComplicationView: View {
 
     // MARK: - Inline
 
-    /// Single line: summarized headline or "SimpleNews · N new"
+    /// Single line: summarized headline or "SimpleNews"
     private var inlineView: some View {
         ViewThatFits {
             if let title = entry.topHeadlineTitle {
-                Text(summarize(title, maxLength: 40))
-            } else if entry.newArticleCount > 0 {
-                Text("SimpleNews · \(entry.newArticleCount) new")
+                Text(summarize(title, maxLength: 35))
             } else {
                 Text("SimpleNews")
             }
@@ -321,20 +302,84 @@ struct SimpleNewsComplicationView: View {
 
     // MARK: - Helpers
 
-    /// Truncates a headline to fit within a character limit, breaking at word
-    /// boundaries and appending an ellipsis when shortened.
+    /// Condenses a headline to fit within a character limit.
+    ///
+    /// Processing order:
+    /// 1. Strip label prefixes before a colon ("Elite longevity: Flacco..." → "Flacco...")
+    /// 2. Remove appositional/parenthetical clauses (", 41," or "(AP)" etc.)
+    /// 3. Collapse filler words ("agrees to a contract with" → "agrees to deal")
+    /// 4. Truncate at the last word boundary if still too long
     private func summarize(_ text: String, maxLength: Int) -> String {
-        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard trimmed.count > maxLength else { return trimmed }
+        var h = text.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        // Find the last space before the limit (leave room for ellipsis)
-        let cutoff = trimmed.index(trimmed.startIndex, offsetBy: maxLength - 1)
-        let substring = trimmed[trimmed.startIndex..<cutoff]
-        if let lastSpace = substring.lastIndex(of: " ") {
-            return String(trimmed[trimmed.startIndex..<lastSpace]) + "…"
+        // 1) Strip short prefix labels before a colon
+        if h.count > maxLength,
+           let colonRange = h.range(of: ": "),
+           h.distance(from: h.startIndex, to: colonRange.lowerBound) < 25 {
+            let after = String(h[colonRange.upperBound...])
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            if !after.isEmpty { h = after }
         }
-        // No space found — hard cut
-        return String(substring) + "…"
+
+        // 2) Strip leading and trailing quotes/brackets
+        let quoteChars = CharacterSet(charactersIn: "'\"\u{2018}\u{2019}\u{201C}\u{201D}")
+        while let first = h.unicodeScalars.first, quoteChars.contains(first) || first == "(" {
+            h = String(h.dropFirst()).trimmingCharacters(in: .whitespaces)
+        }
+        while let last = h.unicodeScalars.last, quoteChars.contains(last) {
+            h = String(h.dropLast()).trimmingCharacters(in: .whitespaces)
+        }
+
+        // 3) Remove appositional clauses: ", 41," or ", age 23," or "(AP)" etc.
+        //    Matches ", <short text>," where the inner text is ≤15 chars
+        h = h.replacingOccurrences(
+            of: #",\s[^,]{1,15},"#,
+            with: "",
+            options: .regularExpression
+        )
+        // Remove inline parentheticals like "(AP)" or "(report)"
+        h = h.replacingOccurrences(
+            of: #"\s*\([^)]{1,20}\)"#,
+            with: "",
+            options: .regularExpression
+        )
+
+        // 4) Collapse verbose contract/deal phrasing
+        let dealPatterns: [(String, String)] = [
+            (#"agrees to (?:a )?(?:\d+[ -]year )?\$?[\d.]+ (?:million |billion )?(?:contract|deal|extension)(?: with .+)?"#, "agrees to deal"),
+            (#"agrees to (?:a )?(?:contract|deal|extension) with .+"#, "agrees to deal"),
+            (#"agrees to (?:terms|a deal|contract) with the (.+)"#, "agrees to $1 deal"),
+            (#"has been (?:traded|sent) to the (.+?)(?:\s+(?:for|in exchange).*)?"#, "traded to $1"),
+            (#"is expected to (?:sign|join|agree)"#, "expected to sign"),
+            (#"sources? (?:say|said|tell|told) "#, ""),
+            (#"according to (?:a |multiple )?(?:sources?|reports?|ESPN)"#, ""),
+        ]
+        for (pattern, replacement) in dealPatterns {
+            if let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) {
+                h = regex.stringByReplacingMatches(
+                    in: h,
+                    range: NSRange(h.startIndex..., in: h),
+                    withTemplate: replacement
+                )
+            }
+        }
+
+        // Clean up double spaces and trailing punctuation artifacts
+        while h.contains("  ") {
+            h = h.replacingOccurrences(of: "  ", with: " ")
+        }
+        h = h.trimmingCharacters(in: .whitespacesAndNewlines)
+        h = h.trimmingCharacters(in: CharacterSet(charactersIn: ",.;: "))
+
+        guard h.count > maxLength else { return h }
+
+        // 5) Truncate at last word boundary
+        let cutoff = h.index(h.startIndex, offsetBy: maxLength - 1)
+        let sub = h[h.startIndex..<cutoff]
+        if let lastSpace = sub.lastIndex(of: " ") {
+            return String(h[h.startIndex..<lastSpace]) + "…"
+        }
+        return String(sub) + "…"
     }
 
     /// Deep link: article detail if we have a headline ID, otherwise summary
@@ -375,7 +420,6 @@ struct SimpleNewsComplication: Widget {
         .description("Quick access to headlines, daily summary, or launch SimpleNews.")
         #if os(watchOS)
         .supportedFamilies([
-            .accessoryCircular,
             .accessoryCorner,
             .accessoryRectangular,
             .accessoryInline
@@ -387,12 +431,6 @@ struct SimpleNewsComplication: Widget {
 // MARK: - Previews
 
 #if DEBUG
-#Preview("Circular", as: .accessoryCircular) {
-    SimpleNewsComplication()
-} timeline: {
-    ComplicationEntry.placeholder
-}
-
 #Preview("Corner", as: .accessoryCorner) {
     SimpleNewsComplication()
 } timeline: {
