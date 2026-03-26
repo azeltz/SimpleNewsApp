@@ -389,12 +389,19 @@ The main app writes `blockedTags` to the shared App Group container (`group.com.
 
 | Family | Content | Character Budget |
 |--------|---------|-----------------|
-| `accessoryCorner` | Icon body + curved headline in `widgetLabel` | ~25 chars |
-| `accessoryInline` | Single-line headline via `ViewThatFits` | ~40 chars |
-| `accessoryRectangular` | Header + 2-line headline + source | ~60 chars |
-| `accessoryCircular` | Newspaper icon launcher (no text) | N/A |
+| `accessoryCorner` | Icon body + curved headline in `widgetLabel` | ~20 chars |
+| `accessoryInline` | Single-line headline via `ViewThatFits` | ~35 chars |
+| `accessoryRectangular` | Small header + prominent 2-line headline + small source | ~50 chars |
 
-Headlines are truncated at word boundaries with an ellipsis when they exceed the budget.
+### Headline Condensation
+
+Complication headlines are actively condensed rather than simply truncated. The `summarize` function applies these steps in order:
+
+1. **Strip label prefixes** — Removes short text before a colon (e.g. "Elite longevity: Flacco..." → "Flacco...")
+2. **Remove appositional clauses** — Strips inline asides like ", 41," or "(AP)"
+3. **Collapse verbose phrasing** — Rewrites contract/trade language (e.g. "agrees to a 10-year $450 million contract with the Chiefs" → "agrees to deal"), removes filler like "sources say" and "according to ESPN"
+4. **Clean up artifacts** — Removes double spaces, trailing punctuation, and stray quotes
+5. **Word-boundary truncation** — If still over budget, cuts at the last space and appends an ellipsis
 
 ### Widget Deduplication
 
