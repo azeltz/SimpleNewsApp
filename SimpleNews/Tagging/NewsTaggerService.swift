@@ -119,7 +119,6 @@ final class NewsTaggerService {
         }
 
         guard !tfCounts.isEmpty else {
-            //print("NewsTaggerService: no vocab hits for text, tokens=\(tokens.prefix(10))")
             return []
         }
 
@@ -146,7 +145,7 @@ final class NewsTaggerService {
                 nonZeroCount += 1
             }
         }
-        //print("NewsTaggerService: non-zero TF-IDF features =", nonZeroCount)
+
 
         // 4) Run Core ML model (linear logits)
         guard let model else { return [] }
@@ -171,7 +170,6 @@ final class NewsTaggerService {
         }
 
         _ = tagProbs.sorted { $0.1 > $1.1 }
-        //print("NewsTaggerService: top tags =", sortedAll.prefix(5))
 
         // 5) Threshold and sort
         let threshold = 0.15

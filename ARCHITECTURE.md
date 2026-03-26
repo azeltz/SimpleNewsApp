@@ -11,7 +11,7 @@ SimpleNews is a multi-platform news aggregator built with SwiftUI. It fetches ar
 ```mermaid
 graph TD
     subgraph Backend["Cloudflare Workers Backend"]
-        API["rss-aggregator.simplenews.workers.dev"]
+        API["rss-aggregator.amiracle.workers.dev"]
     end
 
     subgraph iOS["iOS App"]
@@ -203,6 +203,7 @@ classDiagram
 | `UserIdManager` | Keychain | `com.simplenews.userId` | Persistent device UUID |
 | `UsageTracker` | UserDefaults | `usageTrackerDays` | Per-screen daily time tracking |
 | `SubscriptionStore` | WKWebsiteDataStore | Per-domain cookie jars | Paywall login sessions |
+| `WatchHeadlineCache` | UserDefaults (watchOS) | `cachedHeadlines` | Cached watch headlines with 24-hour TTL |
 | Blocked Tags (shared) | App Group UserDefaults | `group.com.simplenews.shared` → `blockedTags` | Widget/complication tag filtering |
 
 ---
@@ -362,6 +363,14 @@ sequenceDiagram
 
 Communication uses `sendMessage` when reachable (instant) with `transferUserInfo` fallback (guaranteed delivery). Application context carries: saved IDs, AI summary text, user settings, and user ID.
 
+### WatchConnectivity Race Condition Handling
+
+When the watch app launches, the WCSession may have already received application context from the iPhone before the view model is attached. `WatchSessionManager.replayPendingContext()` is called on `onAppear` after `attach(viewModel:)` to read `WCSession.default.receivedApplicationContext` and apply any pending saved IDs, AI summary, or settings that arrived before the session delegate was wired up.
+
+### Watch Headline Caching & Retry
+
+`WatchHeadlinesViewModel` includes a local headline cache (`WatchHeadlineCache`) backed by `UserDefaults` with a 24-hour TTL. On launch, cached headlines are displayed immediately while the network fetch runs in the background. Network fetches use automatic retry with exponential back-off (up to 2 retries, delays of 1s and 2s). An error message is shown only if both the network fetch and cache are empty.
+
 ---
 
 ## Widget & Complication Architecture
@@ -443,7 +452,7 @@ All other functionality uses Apple frameworks: SwiftUI, WebKit, CoreML, NaturalL
 
 1. **UserDefaults-heavy persistence**: Simple key-value storage for most state. File-based caching only for the article feed (which can be large). Keychain for the user ID.
 
-2. **No Combine in business logic**: The codebase uses `async/await` throughout. `@Published` properties on `@MainActor` view models drive SwiftUI reactivity.
+2. **No Combine in business logic**: The codebase uses `async/await` throughout. The iOS app uses `@Published` properties on `@MainActor` view models for SwiftUI reactivity. The watchOS app uses the `@Observable` macro (Observation framework) instead of `ObservableObject`/`@Published`, as required by watchOS 26's strict concurrency model.
 
 3. **Graceful degradation**: Every pipeline has fallbacks. Reader extraction falls back through Readability -> JSON-LD -> og:description. Classification falls back through NLModel -> CoreML -> keyword rules. Summarization falls back from Foundation Models to extractive.
 
@@ -456,3 +465,53 @@ All other functionality uses Apple frameworks: SwiftUI, WebKit, CoreML, NaturalL
 7. **App Group for cross-target settings**: Blocked tags are synced from the main app to a shared App Group container (`group.com.simplenews.shared`) so the widget and complication can filter articles without duplicating the full settings stack. Only the minimal data needed (blocked tags array) is shared.
 
 8. **Consistent timestamp correction**: The EDT/EST future-date fix is applied identically across all four targets to prevent feed ordering inconsistencies between the app, watch, widget, and complications.
+
+9. **Safe URL construction**: All dynamic URL construction (network requests, deep links) uses `guard let` / `URLComponents` instead of force-unwrapping. Static URL literals in source arrays (e.g., `FeedSource`, `SubscriptionSource`) are annotated with `swiftlint:disable force_unwrapping` since they are compile-time constants. Complication deep links percent-encode dynamic article IDs to handle special characters safely.
+
+10. **Watch headline resilience**: The watch app loads cached headlines on launch for instant display, fetches fresh data in the background with automatic retry (exponential back-off), and only shows errors when both network and cache fail. This ensures the watch face always has content to display even with poor connectivity.
+
+11. **Debug-only test controls**: The "Send test notification" button in Settings is wrapped in `#if DEBUG` to prevent accidental inclusion in release builds that could trigger App Review rejection.
+
+12. **New-user defaults**: `enableFixedGoogleNewsFavorites` defaults to `false` so new users start with a clean keyword list rather than inheriting hardcoded favorites.
+
+---
+
+## Release Checklist
+
+### Build Version
+
+Before each TestFlight or App Store upload, increment `CURRENT_PROJECT_VERSION` in the Xcode project settings (Build Settings → Versioning). Apple rejects uploads with a duplicate build number for the same `MARKETING_VERSION`. The marketing version (`CFBundleShortVersionString`) only needs to change for user-visible releases.
+
+### App Store Connect Privacy Declarations
+
+The following data types must be declared in App Store Connect → App Privacy:
+
+| Data Type | Category | Purpose | Linked to Identity | Tracking |
+|-----------|----------|---------|-------------------|----------|
+| Device ID (`UserIdManager`) | Identifiers | App Functionality (per-user feed personalization) | No | No |
+| Usage Data (`UsageTracker`) | Usage Data | Analytics (per-screen time tracking, on-device only) | No | No |
+| Browsing History (article reads, `ReadArticlesStore`) | Usage Data | App Functionality | No | No |
+| Search History (`/api/search-news`) | Usage Data | App Functionality | No | No |
+| Cookies (`SubscriptionStore`) | — | App Functionality (paywall login sessions, per-domain) | No | No |
+
+**Not collected**: No names, emails, phone numbers, photos, contacts, health, financial, location, or advertising data. All ML processing (category classification, keyword tagging, summarization) runs on-device. The backend receives only the device UUID for feed personalization — no personal identifiers.
+
+### App Review Notes
+
+Suggested review notes for App Store submission:
+
+> SimpleNews is a personal news aggregator for iOS and Apple Watch. It fetches articles from 20+ public RSS feeds via a Cloudflare Workers backend, enriches them with on-device ML classification and AI summarization, and presents a scored, personalized feed.
+>
+> The app requires network access to fetch articles. The watch companion displays headlines and supports save/unsave. The widget shows the latest headlines on the home screen and lock screen. Watch complications show condensed headlines on watch faces.
+>
+> No login is required. A random device UUID is used for per-user feed personalization — no personal information is collected.
+>
+> The "Social" tab embeds Instagram, Reddit, and LinkedIn in WKWebViews for quick access — these are standard web views, not custom browsers.
+
+### Icon Assets
+
+| Target | Icon File | Platform |
+|--------|-----------|----------|
+| iOS App | `simplenews.png` (1024×1024) | `ios` |
+| watchOS App | `simplenews-watch-icon.png` (1024×1024) | `watchos` |
+| Widget Extension | `simplenews-watch-icon.png` (1024×1024) | `watchos` |

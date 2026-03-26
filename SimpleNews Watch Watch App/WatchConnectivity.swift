@@ -30,6 +30,15 @@ final class WatchSessionManager: NSObject, WCSessionDelegate {
         self.viewModel = viewModel
     }
 
+    /// Replay the most recent applicationContext that may have arrived
+    /// before the view model was attached. Call once after `attach(viewModel:)`.
+    func replayPendingContext() {
+        guard WCSession.isSupported() else { return }
+        let ctx = WCSession.default.receivedApplicationContext
+        guard !ctx.isEmpty else { return }
+        applyContext(ctx)
+    }
+
     // MARK: - Send toggle saved command to iPhone
 
     func toggleSaved(headline: WatchHeadline) {

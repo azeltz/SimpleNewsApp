@@ -9,7 +9,7 @@ import SwiftUI
 
 struct WatchHeadlineDetailView: View {
     let headline: WatchHeadline
-    @ObservedObject var viewModel: WatchHeadlinesViewModel
+    var viewModel: WatchHeadlinesViewModel
 
     /// Local copy of saved state for responsive UI
     @State private var isSaved: Bool = false

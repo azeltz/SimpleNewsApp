@@ -66,10 +66,19 @@ struct SimpleNewsComplicationProvider: TimelineProvider {
         }
     }
 
+    private static let emptyEntry = ComplicationEntry(
+        date: Date(), topHeadlineTitle: nil, topHeadlineSource: nil,
+        topHeadlineID: nil, newArticleCount: 0, isPlaceholder: false
+    )
+
     private func fetchComplicationData(completion: @escaping (ComplicationEntry) -> Void) {
-        var components = URLComponents(string: "https://rss-aggregator.simplenews.workers.dev/api/news")!
+        guard var components = URLComponents(string: "https://rss-aggregator.amiracle.workers.dev/api/news") else {
+            completion(Self.emptyEntry); return
+        }
         components.queryItems = [URLQueryItem(name: "userId", value: "watch")]
-        let url = components.url!
+        guard let url = components.url else {
+            completion(Self.emptyEntry); return
+        }
         var request = URLRequest(url: url)
         request.timeoutInterval = 10
 
@@ -384,9 +393,12 @@ struct SimpleNewsComplicationView: View {
 
     /// Deep link: article detail if we have a headline ID, otherwise summary
     private var complicationDeepLink: URL {
-        if let id = entry.topHeadlineID {
-            return URL(string: "simplenews://article/\(id)")!
+        if let id = entry.topHeadlineID,
+           let encoded = id.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed),
+           let url = URL(string: "simplenews://article/\(encoded)") {
+            return url
         }
+        // Safe: static string, always valid
         return URL(string: "simplenews://summary")!
     }
 

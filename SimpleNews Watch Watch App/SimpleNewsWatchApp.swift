@@ -9,7 +9,7 @@ import SwiftUI
 
 @main
 struct SimpleNewsWatchApp: App {
-    @StateObject private var headlinesViewModel = WatchHeadlinesViewModel()
+    @State private var headlinesViewModel = WatchHeadlinesViewModel()
 
     /// Deep link article ID from complication tap (simplenews://article/<id>)
     @State private var deepLinkArticleID: String?
@@ -29,7 +29,10 @@ struct SimpleNewsWatchApp: App {
                 showSummaryFromDeepLink: $showSummaryFromDeepLink
             )
             .onAppear {
+                // Attach the view model and replay any context that arrived
+                // between session activation (in init) and first render.
                 WatchSessionManager.shared.attach(viewModel: headlinesViewModel)
+                WatchSessionManager.shared.replayPendingContext()
             }
             .onOpenURL { url in
                 handleDeepLink(url)

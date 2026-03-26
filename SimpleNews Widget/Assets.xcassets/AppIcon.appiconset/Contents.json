@@ -1,6 +1,7 @@
 {
   "images" : [
     {
+      "filename" : "simplenews-watch-icon.png",
       "idiom" : "universal",
       "platform" : "watchos",
       "size" : "1024x1024"

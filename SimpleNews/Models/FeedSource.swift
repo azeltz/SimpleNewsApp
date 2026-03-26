@@ -64,6 +64,9 @@ extension FeedSource {
 
 extension FeedSource {
     /// The canonical default feed list. `UserSourcesStore` uses this as its starting point.
+    /// Note: Force unwraps on URL(string:) below are safe — all strings are compile-time
+    /// constants verified to be valid URLs.
+    // swiftlint:disable force_unwrapping
     static let defaultSources: [FeedSource] = [
         // ESPN
         FeedSource(id: "espn_top",       url: URL(string: "https://www.espn.com/espn/rss/news")!,               source: "espn.com",              kind: "top",        isDefault: true, isEnabled: true,  displayName: "ESPN – Top Headlines"),
@@ -111,4 +114,5 @@ extension FeedSource {
         // SEC
         FeedSource(id: "sec_news",       url: URL(string: "https://news.google.com/rss/search?q=%22SEC%22+OR+%22Southeastern+Conference%22+college+football+OR+college+basketball&hl=en-US&gl=US&ceid=US:en")!, source: "news.google.com", kind: "consistent", isDefault: true, isEnabled: false, displayName: "SEC Sports (Google News)"),
     ]
+    // swiftlint:enable force_unwrapping
 }

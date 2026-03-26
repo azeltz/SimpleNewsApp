@@ -729,7 +729,7 @@ extension UIImage {
 
             let fullBodyRect = CGRect(x: inset, y: bodyTopY, width: contentWidth, height: bodyMaxHeight)
 
-            let ctx = UIGraphicsGetCurrentContext()!
+            guard let ctx = UIGraphicsGetCurrentContext() else { return }
             ctx.saveGState()
             ctx.textMatrix = .identity
             ctx.translateBy(x: 0, y: targetSize.height)

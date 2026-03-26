@@ -27,7 +27,9 @@ struct RSSBackendResponse: Codable {
 }
 
 /// Central backend base URL used across the app.
-let simpleNewsBackendBaseURL = URL(string: "https://rss-aggregator.simplenews.workers.dev")!
+/// Force-unwrap is safe: compile-time constant, verified valid.
+// swiftlint:disable:next force_unwrapping
+let simpleNewsBackendBaseURL = URL(string: "https://rss-aggregator.amiracle.workers.dev")!
 
 final class RSSBackendClient {
     private let baseURL = simpleNewsBackendBaseURL
@@ -36,9 +38,11 @@ final class RSSBackendClient {
 
     /// Fetches articles from /api/news and returns both the mapped articles and the lastSnapshotAt timestamp (if present).
     func fetchArticles() async throws -> (articles: [Article], lastSnapshotAt: Date?) {
-        var components = URLComponents(url: baseURL.appendingPathComponent("api/news"), resolvingAgainstBaseURL: false)!
+        guard var components = URLComponents(url: baseURL.appendingPathComponent("api/news"), resolvingAgainstBaseURL: false) else {
+            throw URLError(.badURL)
+        }
         components.queryItems = [URLQueryItem(name: "userId", value: UserIdManager.current)]
-        let url = components.url!
+        guard let url = components.url else { throw URLError(.badURL) }
         let (data, response) = try await URLSession.shared.data(from: url)
 
         if let http = response as? HTTPURLResponse, !(200...299).contains(http.statusCode) {

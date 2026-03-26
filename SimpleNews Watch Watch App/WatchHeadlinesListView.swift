@@ -14,7 +14,7 @@ private let relativeFormatter: RelativeDateTimeFormatter = {
 }()
 
 struct WatchHeadlinesListView: View {
-    @ObservedObject var viewModel: WatchHeadlinesViewModel
+    var viewModel: WatchHeadlinesViewModel
 
     /// Deep link article ID from complication tap
     @Binding var deepLinkArticleID: String?

@@ -56,7 +56,8 @@ struct AppSettings: Codable, Equatable {
     /// User-entered Google News keywords (favorites editor).
     var googleNewsUserKeywords: [String] = []
     /// Whether to include built‑in fixed favorites (teams/topics) in Google News.
-    var enableFixedGoogleNewsFavorites: Bool = true
+    /// Defaults to false so new users start with a clean keyword list.
+    var enableFixedGoogleNewsFavorites: Bool = false
     /// Last combined keyword list successfully synced to the backend (fixed favorites + user keywords).
     var lastSyncedGoogleNewsKeywords: [String] = []
 

@@ -71,9 +71,15 @@ struct HeadlineTimelineProvider: TimelineProvider {
     }
 
     private func fetchHeadlines(completion: @escaping (HeadlineEntry) -> Void) {
-        var components = URLComponents(string: "https://rss-aggregator.simplenews.workers.dev/api/news")!
+        guard var components = URLComponents(string: "https://rss-aggregator.amiracle.workers.dev/api/news") else {
+            completion(HeadlineEntry(date: Date(), headlines: [], isPlaceholder: false))
+            return
+        }
         components.queryItems = [URLQueryItem(name: "userId", value: "widget")]
-        let url = components.url!
+        guard let url = components.url else {
+            completion(HeadlineEntry(date: Date(), headlines: [], isPlaceholder: false))
+            return
+        }
         var request = URLRequest(url: url)
         request.timeoutInterval = 15
 

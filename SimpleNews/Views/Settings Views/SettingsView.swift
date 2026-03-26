@@ -193,6 +193,7 @@ struct SettingsView: View {
                 }
             }
 
+            #if DEBUG
             Button("Send test notification") {
                 Task {
                     if !NotificationManager.shared.isAuthorized {
@@ -202,6 +203,7 @@ struct SettingsView: View {
                 }
             }
             .font(.caption)
+            #endif
         }
         .task {
             await notificationManager.refreshAuthorizationStatus()
